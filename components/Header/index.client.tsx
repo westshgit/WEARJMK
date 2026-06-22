@@ -14,6 +14,7 @@ import { usePathname } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 import { Search } from './SearchHeader'
+import { CurrencySelector } from './CurrencySelector'
 
 type Props = {
   header: Header
@@ -60,11 +61,16 @@ export function HeaderClient({ header }: Props) {
           <Search className="hidden md:flex flex-1" />
 
           <div className="flex items-center max-md:flex-1 max-md:justify-end">
+            <div className="hidden md:block">
+              <CurrencySelector />
+            </div>
             {/* Pinned to the right of search */}
             <Suspense fallback={<OpenCartButton />}>
               <Cart />
             </Suspense>
-            <ThemeSelector />
+            <div className="hidden md:block">
+              <ThemeSelector />
+            </div>
           </div>
         </nav>
         <Search className="md:hidden px-4 py-2" />

@@ -17,6 +17,8 @@ import { MenuIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
+import { CurrencySelector } from './CurrencySelector'
 import { BrandWordmark } from './BrandWordmark'
 
 interface Props {
@@ -110,6 +112,18 @@ export function MobileMenu({ menu }: Props) {
             </div>
           </div>
         )}
+
+        <div className="mt-6 border-t pt-4">
+          <h2 className="mb-4 text-xl">Preferences</h2>
+          <div className="flex flex-col gap-3">
+            <div className="w-fit">
+              <CurrencySelector />
+            </div>
+            <div className="w-fit">
+              <ThemeSelector />
+            </div>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   )
