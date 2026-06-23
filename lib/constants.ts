@@ -16,5 +16,3 @@ export const sorting: SortFilterItem[] = [
   { slug: 'priceInUSD', reverse: false, title: 'Price: Low to high' }, // asc
   { slug: '-priceInUSD', reverse: true, title: 'Price: High to low' },
 ]
-
-// We going to add a new sorting option for the products

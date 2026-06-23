@@ -22,11 +22,16 @@ export const Video: React.FC<MediaProps> = (props) => {
   }, [])
 
   if (resource && typeof resource === 'object') {
-    const { filename } = resource
+    const { filename, url } = resource
+    const videoSource = url || (filename ? `/media/${filename}` : '')
+
+    if (!videoSource) {
+      return null
+    }
 
     return (
       <video autoPlay className={cn(videoClassName)} controls={false} loop muted onClick={onClick} playsInline ref={videoRef}>
-        <source src={`${process.env.NEXT_PUBLIC_SERVER_URL}/media/${filename}`} />
+        <source src={videoSource} />
       </video>
     )
   }

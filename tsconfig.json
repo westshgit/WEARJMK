@@ -34,6 +34,6 @@
     "redirects.ts",
     "**/*.mts",
     "vitest.setup.ts" 
-, "app/(wearjmk)/bio/-----.layout..tx",   ],
+, "app/(wearjmk)/(bio-page)/-----.layout..tx",   ],
   "exclude": ["node_modules"]
 }
