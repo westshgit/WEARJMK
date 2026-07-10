@@ -1,0 +1,12 @@
+[project]
+name = "wearjmk"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+
+# Add Ruff formating configuration
+[tool.ruff]
+line-length = 160

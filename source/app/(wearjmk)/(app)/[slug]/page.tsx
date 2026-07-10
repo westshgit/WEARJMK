@@ -1,0 +1,95 @@
+import type { Metadata } from 'next'
+
+import { RenderBlocks } from '@/blocks/RenderBlocks'
+import { generateMeta } from '@/utilities/generateMeta'
+import configPromise from '@payload-config'
+import { draftMode } from 'next/headers'
+import { getPayload } from 'payload'
+
+import { notFound } from 'next/navigation'
+
+export async function generateStaticParams() {
+  const payload = await getPayload({ config: configPromise })
+  const pages = await payload.find({
+    collection: 'pages',
+    draft: false,
+    limit: 1000,
+    overrideAccess: false,
+    pagination: false,
+    select: {
+      slug: true,
+    },
+  })
+
+  const params = pages.docs
+    ?.filter((doc) => {
+      return doc.slug !== 'home'
+    })
+    .map(({ slug }) => {
+      return { slug }
+    })
+
+  return params
+}
+
+type Args = {
+  params: Promise<{
+    slug?: string
+  }>
+}
+
+export default async function Page({ params }: Args) {
+  const { slug = 'home' } = await params
+  const url = '/' + slug
+
+  let page = await queryPageBySlug({
+    slug,
+  })
+  if (!page) {
+    console.log('Try to fetch page with slug, ', slug)
+    return notFound()
+  }
+  const { layout } = page
+
+  return (
+    <div className="space-y-32 mb-16 p-6 lg:p-2 xl:p-0 container">
+      <RenderBlocks blocks={layout} />
+    </div>
+  )
+}
+
+export async function generateMetadata({ params }: Args): Promise<Metadata> {
+  const { slug = 'home' } = await params
+
+  const page = await queryPageBySlug({
+    slug,
+  })
+
+  return generateMeta({ doc: page })
+}
+
+const queryPageBySlug = async ({ slug }: { slug: string }) => {
+  const { isEnabled: draft } = await draftMode()
+
+  const payload = await getPayload({ config: configPromise })
+
+  const result = await payload.find({
+    collection: 'pages',
+    draft,
+    limit: 1,
+    overrideAccess: draft,
+    pagination: false,
+    where: {
+      and: [
+        {
+          slug: {
+            equals: slug,
+          },
+        },
+        ...(draft ? [] : [{ _status: { equals: 'published' } }]),
+      ],
+    },
+  })
+
+  return result.docs?.[0] || null
+}
