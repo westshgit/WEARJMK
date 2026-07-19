@@ -10,9 +10,12 @@ import React, { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 type Props = {
   product: Product
+  children?: React.ReactNode
+  className?: string
+  variant?: 'default' | 'outline' | 'ghost' | 'link' | 'destructive' | 'secondary'
 }
 
-export function AddToCart({ product }: Props) {
+export function AddToCart({ product, children, className, variant }: Props) {
   const { addItem, cart, isLoading } = useCart()
   const searchParams = useSearchParams()
 
@@ -54,11 +57,7 @@ export function AddToCart({ product }: Props) {
   const disabled = useMemo<boolean>(() => {
     const existingItem = cart?.items?.find((item) => {
       const productID = typeof item.product === 'object' ? item.product?.id : item.product
-      const variantID = item.variant
-        ? typeof item.variant === 'object'
-          ? item.variant?.id
-          : item.variant
-        : undefined
+      const variantID = item.variant ? (typeof item.variant === 'object' ? item.variant?.id : item.variant) : undefined
 
       if (productID === product.id) {
         if (product.enableVariants) {
@@ -97,15 +96,13 @@ export function AddToCart({ product }: Props) {
   return (
     <Button
       aria-label="Add to cart"
-      variant={'outline'}
-      className={clsx({
-        'hover:opacity-90': true,
-      })}
+      variant={variant ?? 'outline'}
+      className={clsx('hover:opacity-90', className)}
       disabled={disabled || isLoading}
       onClick={addToCart}
       type="submit"
     >
-      Add To Cart
+      {children ?? 'Add To Cart'}
     </Button>
   )
 }

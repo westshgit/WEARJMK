@@ -2,7 +2,7 @@
 
 import { Price } from '@/components/Price'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
+import { useCart, useCurrency } from '@payloadcms/plugin-ecommerce/client/react'
 import { ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -13,12 +13,15 @@ import { DeleteItemButton } from './DeleteItemButton'
 import { EditItemQuantityButton } from './EditItemQuantityButton'
 import { OpenCartButton } from './OpenCart'
 import { Button } from '@/components/ui/button'
-import { Product } from '@/payload-types'
+import { Product, Variant } from '@/payload-types'
+import { getPriceWithCurrencyCode } from '@/utilities'
+import { computeCartSubtotal } from '@/utilities/computeCartInClientSubtotal'
 
 export function CartModal() {
   const { cart } = useCart()
   const [isOpen, setIsOpen] = useState(false)
 
+  const { currency } = useCurrency()
   const pathname = usePathname()
 
   useEffect(() => {
@@ -30,6 +33,11 @@ export function CartModal() {
     if (!cart || !cart.items || !cart.items.length) return undefined
     return cart.items.reduce((quantity, item) => (item.quantity || 0) + quantity, 0)
   }, [cart])
+
+  // const total = useMemo(() => {
+  //   if (!cart || !cart.items) return 0
+  //   return computeCartSubtotal(cart.items, currency.code)
+  // }, [cart, currency.code])
 
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>
@@ -54,8 +62,8 @@ export function CartModal() {
             <div className="flex flex-col justify-between w-full">
               <ul className="grow overflow-auto py-4">
                 {cart?.items?.map((item, i) => {
-                  const product = item.product
-                  const variant = item.variant
+                  const product = item.product as Product
+                  const variant = item.variant as Variant
 
                   if (typeof product !== 'object' || !item || !product || !product.slug) return <React.Fragment key={i} />
 
@@ -64,13 +72,14 @@ export function CartModal() {
                   const firstGalleryImage = typeof product.gallery?.[0]?.image === 'object' ? product.gallery?.[0]?.image : undefined
 
                   let image = firstGalleryImage || metaImage
-                  let price = product.priceInUSD
 
                   const isVariant = Boolean(variant) && typeof variant === 'object'
 
-                  if (isVariant) {
-                    price = variant?.priceInUSD
+                  const price = isVariant
+                    ? getPriceWithCurrencyCode(variant as Variant, currency.code)
+                    : getPriceWithCurrencyCode(product as Product, currency.code)
 
+                  if (isVariant) {
                     const imageVariant = product.gallery?.find((item) => {
                       if (!item.variantOption) return false
                       const variantOptionID = typeof item.variantOption === 'object' ? item.variantOption.id : item.variantOption
@@ -133,10 +142,10 @@ export function CartModal() {
 
               <div className="px-4">
                 <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
-                  {typeof cart?.subtotal === 'number' && (
+                  {typeof cart.subtotal === 'number' && (
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
                       <p>Total</p>
-                      <Price amount={cart?.subtotal} className="text-right text-base text-black dark:text-white" />
+                      <Price amount={cart.subtotal} className="text-right text-base text-black dark:text-white" />
                     </div>
                   )}
 

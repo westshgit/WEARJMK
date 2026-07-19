@@ -2,7 +2,6 @@
 import BrandImage from '@/components/BrandImage'
 import { Cart } from '@/components/Cart'
 import { OpenCartButton } from '@/components/Cart/OpenCart'
-import CurrencySelector from '@/components/CurrencySelector'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,8 +15,7 @@ import {
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { CREATE_ACCOUNT_ICON, LOGIN_ICON } from '@/lib/constants.client'
-import type { Category } from '@/payload-types'
-import { useAuth } from '@/providers'
+import type { Category, User } from '@/payload-types'
 import { RiHeart2Line, RiLogoutBoxRLine, RiMore2Fill, RiUserLine } from '@remixicon/react'
 import { AnimatePresence, motion, Transition } from 'motion/react'
 import Link from 'next/link'
@@ -35,10 +33,10 @@ const dropdownVariants = {
 const dropdownTransition = { duration: 0.15, ease: [0.16, 1, 0.3, 1] } satisfies Transition
 type Props = {
   categories: Category[]
+  user?: User
 }
 
-export function HeaderClient({ categories }: Props) {
-  const { user } = useAuth()
+export function HeaderClient({ categories, user }: Props) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
 
   return (
@@ -121,11 +119,11 @@ function MobileMenu({ user }: { user: unknown }) {
                   </Button>
                 </Link>
               </div>
-
+              {/* 
               <div className="space-y-3 mt-6">
                 <h2 className="text-muted-foreground">Change Currency</h2>
                 <CurrencySelector />
-              </div>
+              </div> */}
             </motion.div>
           </DialogContent>
         </AnimatePresence>
@@ -180,12 +178,12 @@ function MobileMenu({ user }: { user: unknown }) {
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuGroup>
+              {/* <DropdownMenuGroup>
                 <DropdownMenuLabel>Select Currency</DropdownMenuLabel>
                 <DropdownMenuItem className="p-0!">
                   <CurrencySelector />
                 </DropdownMenuItem>
-              </DropdownMenuGroup>
+              </DropdownMenuGroup> */}
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem>

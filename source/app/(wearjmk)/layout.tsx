@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import MessageRenderer from '@/components/MessageRenderer'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { SonnerProvider } from '@/providers'
-import { AuthProvider } from '@/providers/Auth'
 import { ThemeProvider } from '@wrksz/themes/next'
 import { Merriweather, Roboto } from 'next/font/google'
 import './globals.css'
@@ -56,14 +55,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <link rel="icon" type="image/png" sizes="16x16" href="/media/favicon/favicon-16x16.png" />
         <link rel="manifest" href="/media/favicon/site.webmanifest" />
       </head>
-      <body>
+      <body className="relative">
         <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem disableTransitionOnChange>
           <MessageRenderer />
-          <AuthProvider>
-            <SonnerProvider>
-              <TooltipProvider>{children}</TooltipProvider>
-            </SonnerProvider>
-          </AuthProvider>
+          <SonnerProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </SonnerProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -78,3 +78,33 @@ export async function updateUserAccount(args: UpdateUserAccountArgs): Promise<Ac
     },
   }
 }
+
+export async function logout(): Promise<ActionResult<null>> {
+  await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate a delay for demonstration purposes
+
+  return {
+    success: false,
+    formError: 'There was an error logging out. Please try again.',
+  }
+}
+
+// const logout = useCallback<Logout>(async () => {
+//   try {
+//     const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/logout`, {
+//       credentials: 'include',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       method: 'POST',
+//     })
+
+//     if (res.ok) {
+//       setUser(null)
+//       setStatus('loggedOut')
+//     } else {
+//       throw new Error('An error occurred while attempting to logout.')
+//     }
+//   } catch (e) {
+//     throw new Error('An error occurred while attempting to logout.')
+//   }
+// }, [])

@@ -6,7 +6,6 @@ import { Price } from '@/components/Price'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/providers/Auth'
 import { useTheme } from '@wrksz/themes/client'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
@@ -16,21 +15,21 @@ import React, { Suspense, useCallback, useEffect, useState } from 'react'
 
 import { cssVariables } from '@/cssVariables'
 import { CheckoutForm } from '@/components/forms/CheckoutForm'
-import { useAddresses, useCart, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
+import { useAddresses, useCart, useCurrency, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
 import { CheckoutAddresses } from '@/components/checkout/CheckoutAddresses'
 import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
-import { Address } from '@/payload-types'
+import { Address, Product, User, Variant } from '@/payload-types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { AddressItem } from '@/components/addresses/AddressItem'
 import { FormItem } from '@/components/forms/FormItem'
 import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { getPriceWithCurrencyCode } from '@/utilities'
 
 const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
 const stripe = loadStripe(apiKey)
 
-export const CheckoutPage: React.FC = () => {
-  const { user } = useAuth()
+export const CheckoutPage: React.FC<{ user?: User }> = ({ user }) => {
   const router = useRouter()
   const { cart } = useCart()
   const [error, setError] = useState<null | string>(null)
@@ -51,6 +50,13 @@ export const CheckoutPage: React.FC = () => {
   const cartIsEmpty = !cart || !cart.items || !cart.items.length
 
   const canGoToPayment = Boolean((email || user) && billingAddress && (billingAddressSameAsShipping || shippingAddress))
+
+  const { currency } = useCurrency()
+
+  // const total = useMemo(() => {
+  //   if (!cart || !cart.items) return 0
+  //   return computeCartSubtotal(cart.items, currency.code)
+  // }, [cart, currency.code])
 
   // On initial load wait for addresses to be loaded and check to see if we can prefill a default one
   useEffect(() => {
@@ -120,13 +126,13 @@ export const CheckoutPage: React.FC = () => {
     return (
       <div className="prose dark:prose-invert py-12 w-full items-center">
         <p>Your cart is empty.</p>
-        <Link href="/search">Continue shopping?</Link>
+        <Link href="/shop">Continue shopping?</Link>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col items-stretch justify-stretch my-8 md:flex-row grow gap-10 md:gap-6 lg:gap-8">
+    <div className="flex flex-col items-stretch justify-stretch mt-8 mb-32 md:flex-row grow gap-10 md:gap-6 lg:gap-8">
       <div className="basis-full lg:basis-2/3 flex flex-col gap-8 justify-stretch">
         <h2 className="font-medium text-3xl">Contact</h2>
         {!user && (
@@ -339,18 +345,24 @@ export const CheckoutPage: React.FC = () => {
                 product: { id, meta, title, gallery },
                 quantity,
                 variant,
-              } = item
+              } = item as {
+                product: Product
+                variant?: Variant
+                quantity?: number
+                [key: string]: unknown
+              }
 
               if (!quantity) return null
 
               let image = gallery?.[0]?.image || meta?.image
-              let price = product?.priceInUSD
 
               const isVariant = Boolean(variant) && typeof variant === 'object'
 
-              if (isVariant) {
-                price = variant?.priceInUSD
+              const price = isVariant
+                ? getPriceWithCurrencyCode(variant as Variant, currency.code)
+                : getPriceWithCurrencyCode(product as Product, currency.code)
 
+              if (isVariant) {
                 const imageVariant = product.gallery?.find((item) => {
                   if (!item.variantOption) return false
                   const variantOptionID = typeof item.variantOption === 'object' ? item.variantOption.id : item.variantOption

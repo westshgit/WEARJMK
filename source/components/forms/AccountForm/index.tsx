@@ -3,15 +3,13 @@
 import { updateUserAccount } from '@/lib/api/authentication'
 import { useForm, revalidateLogic } from '@tanstack/react-form'
 import { fieldIsErrorAfterTouched } from '@/components/forms/shared.api'
-import { useAuth } from '@/providers/Auth'
-import { useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
 import { FormFieldError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { applyServerFieldErrors, clearServerErrorOnChange, useServerActionWithState } from '@/lib/client.api'
+import { applyServerFieldErrors, clearServerErrorOnChange, useServerActionWithState } from '@/utilities/'
 import { emailSchema, passwordSchema, updateAccountSchema } from '@/lib/schema'
 import { toast } from 'sonner'
 import { cn } from '@/utilities'
@@ -19,13 +17,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { User } from '@/payload-types'
 
 export const AccountForm: React.FC<{ user: User }> = ({ user }) => {
-  const { setUser } = useAuth()
-
   const { runAction, isPending } = useServerActionWithState({
     action: ({ name, email, password, passwordConfirm }: { name: string; email: string; password?: string; passwordConfirm?: string }) =>
       updateUserAccount({ userId: user.id, name, email, password, passwordConfirm }),
-    onSuccess: (result) => {
-      setUser(result.data)
+    onSuccess: (_) => {
       toast.success('Account updated successfully.')
     },
     onError: (result) => {

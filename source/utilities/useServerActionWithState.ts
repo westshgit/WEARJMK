@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useCallback, useTransition } from 'react'
-import { ActionResult, SuccessResult, FailureResult } from './shared'
+import { ActionResult, SuccessResult, FailureResult } from '@/lib/shared'
 import type { AnyFormApi } from '@tanstack/react-form'
 
 export type UseServerActionWithStateArgs<T, U> = {

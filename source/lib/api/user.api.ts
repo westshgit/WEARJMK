@@ -1,11 +1,12 @@
 'use server'
 
+import { cache } from 'react'
 import { SanitizedPermissions } from 'payload'
 import { headers } from 'next/headers'
 import { User } from '@/payload-types'
 import { getPayloadAPI } from './shared'
 
-export async function getUserServer(): Promise<{ user: User | null; permissions: SanitizedPermissions | null }> {
+export const getUserServer = cache(async (): Promise<{ user: User | null; permissions: SanitizedPermissions | null }> => {
   try {
     const payload = await getPayloadAPI()
     const reqHeaders = await headers()
@@ -22,4 +23,4 @@ export async function getUserServer(): Promise<{ user: User | null; permissions:
       permissions: null,
     }
   }
-}
+})

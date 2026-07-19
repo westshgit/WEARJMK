@@ -1,18 +1,20 @@
 import type { Media, Product } from '@/payload-types'
-
-import { RenderBlocks } from '@/blocks/RenderBlocks'
-import { GridTileImage } from '@/components/Grid/tile'
 import { Gallery } from '@/components/product/Gallery'
 import { ProductDescription } from '@/components/product/ProductDescription'
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
-import { draftMode } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React, { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
-import { ChevronLeftIcon } from 'lucide-react'
+import { ChevronLeftIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
 import { Metadata } from 'next'
+import { CarouselClient } from '@/blocks/Carousel/Component.client'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { RiMoreFill } from '@remixicon/react'
+import { AddToCart } from '@/components/Cart/AddToCart'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
+import Condition from '@/components/Condition'
+import { queryProductBySlug } from '@/lib/api'
 
 type Args = {
   params: Promise<{
@@ -80,12 +82,12 @@ export default async function ProductPage({ params }: Args) {
       })
     : product.inventory! > 0
 
-  let price = product.priceInUSD
+  let price = product.priceInNGN
 
   if (product.enableVariants && product?.variants?.docs?.length) {
     price = product?.variants?.docs?.reduce((acc, variant) => {
-      if (typeof variant === 'object' && variant?.priceInUSD && acc && variant?.priceInUSD > acc) {
-        return variant.priceInUSD
+      if (typeof variant === 'object' && variant?.priceInNGN && acc && variant?.priceInNGN > acc) {
+        return variant.priceInNGN
       }
       return acc
     }, price)
@@ -115,95 +117,119 @@ export default async function ProductPage({ params }: Args) {
         }}
         type="application/ld+json"
       />
-      <div className="container pt-8 pb-8">
-        <Button asChild variant="ghost" className="mb-4">
-          <Link href="/shop">
-            <ChevronLeftIcon />
-            All products
-          </Link>
-        </Button>
-        <div className="flex flex-col gap-12 rounded-lg border p-8 md:py-12 lg:flex-row lg:gap-8 bg-primary-foreground">
-          <div className="h-full w-full basis-full lg:basis-1/2">
-            <Suspense fallback={<div className="relative aspect-square h-full max-h-137.5 w-full overflow-hidden" />}>
-              {Boolean(gallery?.length) && <Gallery gallery={gallery} />}
-            </Suspense>
-          </div>
+      <div className="space-y-16 container mb-16">
+        <div className="w-full pt-8 pb-8">
+          <Button asChild variant="outline" className="mb-4 uppercase text-xs md:text-sm" size="sm">
+            <Link href="/shop">
+              <ChevronLeftIcon />
+              All products
+            </Link>
+          </Button>
+          <div className="p-1 bg-primary-foreground grid md:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:grid-cols-[minmax(0,480px)_minmax(0,1fr)] gap-2 md:gap-8">
+            <div className="size-full">
+              <Suspense fallback={<div className="relative aspect-square h-full max-h-137.5 w-full overflow-hidden" />}>
+                {Boolean(gallery?.length) && <Gallery gallery={gallery} />}
+              </Suspense>
+            </div>
 
-          <div className="basis-full lg:basis-1/2">
-            <ProductDescription product={product} />
+            <div className="hidden md:block p-4 lg:p-8">
+              <ProductDescription product={product} />
+            </div>
+
+            <div className="md:hidden fixed bottom-0 left-0 right-0 z-10 bg-background shadow-lg">
+              <Sheet modal={false}>
+                <SheetTrigger asChild>
+                  <div className="flex items-center justify-between w-full gap-2 px-4 pt-2 shadow-2xl pb-6">
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground">Viewing:</p>
+                      <div className="flex items-center gap-2">
+                        <h6 className="font-mono uppercase text-base">{product.title}</h6>
+                        <Suspense fallback={null}>
+                          <AddToCart product={product}>
+                            <span className="relative inline-flex">
+                              <ShoppingCartIcon className="size-5" />
+                              <PlusIcon className="absolute -top-1.5 -right-1.5 size-3 rounded-full bg-primary text-primary-foreground p-0.5" strokeWidth={3} />
+                            </span>
+                          </AddToCart>
+                        </Suspense>
+                      </div>
+                    </div>
+
+                    <Button className="" variant={'outline'} type="button" size={'xs'}>
+                      More <RiMoreFill />
+                    </Button>
+                  </div>
+                </SheetTrigger>
+
+                <SheetContent side="bottom" overlay={false} className="h-[50dvh] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden p-4 rounded-t-xl">
+                  <div className="flex-1 max-h-[50dvh] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+                    <ProductDescription product={product} />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* {product.layout?.length ? <RenderBlocks blocks={product.layout} /> : <></>} */}
+        <Condition predicate={Boolean(product.sizeCharts && product.sizeCharts.length > 0)}>
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="size-chart" className="border-b border-border">
+              <AccordionTrigger className="text-sm tracking-[0.2em] uppercase font-bold hover:no-underline py-3">Size Chart</AccordionTrigger>
+              <AccordionContent>
+                {product.sizeCharts && product.sizeCharts.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Size</TableHead>
+                        <TableHead>Bust</TableHead>
+                        <TableHead>Waist</TableHead>
+                        <TableHead>Hips</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {product.sizeCharts.map((row) => {
+                        if (!row) return null
+                        return (
+                          <TableRow key={row.id}>
+                            <TableCell className="font-medium">{row.size || '-'}</TableCell>
+                            <TableCell>{row.bust || '-'}</TableCell>
+                            <TableCell>{row.waist || '-'}</TableCell>
+                            <TableCell>{row.hips || '-'}</TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p className="text-sm text-muted-foreground pb-1">No size chart available.</p>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </Condition>
 
-      {relatedProducts.length ? (
-        <div className="container">
+        <Condition predicate={Boolean(relatedProducts.length)}>
           <RelatedProducts products={relatedProducts as Product[]} />
-        </div>
-      ) : (
-        <></>
-      )}
+        </Condition>
+      </div>
     </React.Fragment>
   )
 }
 
 function RelatedProducts({ products }: { products: Product[] }) {
-  if (!products.length) return null
-
   return (
-    <div className="py-8">
-      <h2 className="mb-4 text-2xl font-bold">Related Products</h2>
-      <ul className="flex w-full gap-4 overflow-x-auto pt-1">
-        {products.map((product) => (
-          <li className="aspect-square w-full flex-none min-[475px]:w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5" key={product.id}>
-            <Link className="relative h-full w-full" href={`/products/${product.slug}`}>
-              <GridTileImage
-                label={{
-                  amount: product.priceInUSD!,
-                  title: product.title,
-                }}
-                media={product.meta?.image as Media}
-              />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Condition predicate={Boolean(products.length)}>
+      <div className="py-8">
+        <h2 className="mb-4 text-2xl font-bold">Related Products</h2>
+        <ul className="flex w-full gap-4 overflow-x-auto pt-1">
+          <CarouselClient
+            products={products}
+            autoScrollOption={{
+              playOnInit: false,
+            }}
+          />
+        </ul>
+      </div>
+    </Condition>
   )
-}
-
-const queryProductBySlug = async ({ slug }: { slug: string }) => {
-  const { isEnabled: draft } = await draftMode()
-
-  const payload = await getPayload({ config: configPromise })
-
-  const result = await payload.find({
-    collection: 'products',
-    depth: 3,
-    draft,
-    limit: 1,
-    overrideAccess: draft,
-    pagination: false,
-    where: {
-      and: [
-        {
-          slug: {
-            equals: slug,
-          },
-        },
-        ...(draft ? [] : [{ _status: { equals: 'published' } }]),
-      ],
-    },
-    populate: {
-      variants: {
-        title: true,
-        priceInUSD: true,
-        inventory: true,
-        options: true,
-      },
-    },
-  })
-
-  return result.docs?.[0] || null
 }

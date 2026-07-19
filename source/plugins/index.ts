@@ -81,6 +81,10 @@ export const plugins: Plugin[] = [
       isAdmin,
       isDocumentOwner,
     },
+    currencies: {
+      supportedCurrencies: [{ code: 'NGN', decimals: 2, label: 'Naira', symbol: '₦' }],
+      defaultCurrency: 'NGN',
+    },
     customers: {
       slug: 'users',
     },
@@ -127,6 +131,13 @@ export const plugins: Plugin[] = [
           },
         ],
       }),
+    },
+    carts: {
+      cartsCollectionOverride: ({ defaultCollection }) => {
+        return {
+          ...defaultCollection,
+        }
+      },
     },
     payments: {
       paymentMethods: [

@@ -24,14 +24,7 @@ type PriceRange = {
 
 type Props = BaseProps & (PriceFixed | PriceRange)
 
-export const Price = ({
-  amount,
-  className,
-  highestAmount,
-  lowestAmount,
-  currencyCode: currencyCodeFromProps,
-  as = 'p',
-}: Props & React.ComponentProps<'p'>) => {
+export const Price = ({ amount, className, highestAmount, lowestAmount, currencyCode: currencyCodeFromProps, as = 'p' }: Props & React.ComponentProps<'p'>) => {
   const { formatCurrency, supportedCurrencies } = useCurrency()
 
   const Element = as

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { forgotPasswordSchema } from '@/lib/schema'
-import { applyServerFieldErrors, useServerActionWithState } from '@/lib/client.api'
+import { applyServerFieldErrors, useServerActionWithState } from '@/utilities'
 import { toast } from 'sonner'
 import { forgotPassword } from '@/lib/api'
 import { fieldIsErrorAfterTouched } from '../shared.api'

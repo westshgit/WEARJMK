@@ -14,12 +14,9 @@ export function DeleteItemButton({ item }: { item: CartItem }) {
     <form>
       <button
         aria-label="Remove cart item"
-        className={clsx(
-          'ease hover:cursor-pointer flex h-[17px] w-[17px] items-center justify-center rounded-full bg-neutral-500 transition-all duration-200',
-          {
-            'cursor-not-allowed px-0': !itemId || isLoading,
-          },
-        )}
+        className={clsx('ease hover:cursor-pointer flex h-4.25 w-4.25 items-center justify-center rounded-full bg-neutral-500 transition-all duration-200', {
+          'cursor-not-allowed px-0': !itemId || isLoading,
+        })}
         disabled={!itemId || isLoading}
         onClick={(e: React.FormEvent<HTMLButtonElement>) => {
           e.preventDefault()

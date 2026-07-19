@@ -18,7 +18,6 @@ import { Categories } from '@/collections/Categories'
 import { Media } from '@/collections/Media'
 import { Pages } from '@/collections/Pages'
 import { Users } from '@/collections/Users'
-import { Currency } from '@/collections/Currency'
 import { Footer, Social } from '@/globals'
 import { plugins } from './plugins'
 
@@ -40,7 +39,7 @@ export default buildConfig({
     },
     user: Users.slug,
   },
-  collections: [Users, Pages, Categories, Media, Currency],
+  collections: [Users, Pages, Categories, Media],
   db: sqliteAdapter({
     client: {
       url: process.env.DATABASE_URL || '',

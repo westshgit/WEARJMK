@@ -11,6 +11,9 @@ import { Price } from '../Price'
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { motion, Variants } from 'motion/react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { AddToCart } from '../Cart/AddToCart'
+import { getPriceWithCurrencyCode } from '@/utilities'
+import { useCurrency } from '@payloadcms/plugin-ecommerce/client/react'
 
 type Props = {
   product: Partial<Product>
@@ -33,25 +36,14 @@ export const ProductGridItem: React.FC<Props> = ({ product, linkClassName, media
   const [open, setOpen] = useState(false)
   const [wishlisted, setWishlisted] = useState(false)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
+  const { currency } = useCurrency()
 
-  const { gallery, priceInUSD, title } = product
-
-  let price = priceInUSD
-
-  const variants = product.variants?.docs
-
-  if (variants && variants.length > 0) {
-    const variant = variants[0]
-    if (variant && typeof variant === 'object' && variant?.priceInUSD && typeof variant.priceInUSD === 'number') {
-      price = variant.priceInUSD
-    }
-  }
-
-  const variantDocs = product.variants?.docs
+  const { gallery, title, variants: { docs: variantDocs } = {} } = product
+  let price: number = getPriceWithCurrencyCode(product as Product, currency.code)
   if (variantDocs && variantDocs.length > 0) {
-    const variant = variantDocs[0]
-    if (variant && typeof variant === 'object' && typeof variant.priceInUSD === 'number') {
-      price = variant.priceInUSD
+    const variantPrice = getPriceWithCurrencyCode(variantDocs[0] as Variant, currency.code)
+    if (variantPrice) {
+      price = variantPrice
     }
   }
 
@@ -87,6 +79,10 @@ export const ProductGridItem: React.FC<Props> = ({ product, linkClassName, media
         ) : null}
       </Link>
 
+      <div className="absolute top-0 left-0 bg-secondary text-secondary-foreground px-2 py-[0.5] text-xs">
+        <p>{title}</p>
+      </div>
+
       <div className="absolute bottom-4 inset-x-0 rounded-[20px] flex flex-col gap-1">
         <div className="flex items-center justify-end pr-2">
           <Dialog>
@@ -96,7 +92,7 @@ export const ProductGridItem: React.FC<Props> = ({ product, linkClassName, media
               </Button>
             </DialogTrigger>
 
-            <DialogContent className="flex h-[90vh] w-[95vw] flex-col overflow-hidden border-none bg-transparent p-0 sm:h-[92vh]" showCloseButton={false}>
+            <DialogContent className="flex max-h-[95vh] max-w-[95vw] flex-col overflow-hidden border-none bg-transparent p-0" showCloseButton={false}>
               {/* pinned layer — outside the scroll region so it never moves */}
               <DialogClose asChild>
                 <div className="flex items-center justify-end">
@@ -107,7 +103,7 @@ export const ProductGridItem: React.FC<Props> = ({ product, linkClassName, media
               </DialogClose>
 
               {/* scrolling layer — image + card, natural height, scrolls only if it overflows */}
-              <div className="flex flex-1 flex-col items-center gap-4 overflow-y-auto">
+              <div className="flex flex-1 flex-col items-center overflow-y-auto">
                 {image ? (
                   <Media
                     className="max-h-[65vh] w-auto max-w-full flex-none"
@@ -120,6 +116,7 @@ export const ProductGridItem: React.FC<Props> = ({ product, linkClassName, media
                   className="w-full flex-none bg-secondary text-secondary-foreground"
                   title={title}
                   price={price}
+                  product={product as Product}
                   sizes={sizes}
                   selectedSize={selectedSize}
                   setSelectedSize={setSelectedSize}
@@ -153,6 +150,7 @@ export const ProductGridItem: React.FC<Props> = ({ product, linkClassName, media
             <ProductDetailsCard
               title={title}
               price={price}
+              product={product as Product}
               sizes={sizes}
               selectedSize={selectedSize}
               setSelectedSize={setSelectedSize}
@@ -167,6 +165,7 @@ export const ProductGridItem: React.FC<Props> = ({ product, linkClassName, media
 }
 
 function ProductDetailsCard({
+  product,
   title,
   price,
   sizes,
@@ -182,6 +181,7 @@ function ProductDetailsCard({
   sizes: string[]
   selectedSize: string | null
   setSelectedSize: (size: string) => void
+  product: Product
   wishlisted: boolean
   setWishlisted: (value: boolean) => void
 }) {
@@ -190,7 +190,8 @@ function ProductDetailsCard({
       {/* title + wishlist */}
       <motion.div variants={itemVariants} className="flex items-start justify-between gap-2">
         <h4 className="font-mono text-base leading-snug text-foreground">{title}</h4>
-        <Button variant={'outline'} onClick={() => setWishlisted((v) => !v)} aria-label="Add to wishlist">
+        {/* onClick={() => setWishlisted((v) => !v)} */}
+        <Button variant={'outline'} aria-label="Add to wishlist">
           <Heart className={clsx('size-4 transition-colors', wishlisted ? 'fill-foreground text-foreground' : 'text-muted-foreground')} />
         </Button>
       </motion.div>
@@ -211,17 +212,10 @@ function ProductDetailsCard({
 
       {/* add to bag */}
       <motion.div variants={itemVariants}>
-        <Button
-          className="w-full uppercase"
-          size="sm"
-          disabled={sizes.length > 0 && !selectedSize}
-          onClick={() => {
-            // wire up cart mutation here — have selectedSize + product available
-          }}
-        >
+        <AddToCart product={product} className="w-full uppercase" variant="default">
           <ShoppingBag className="size-4" />
           Add to Bag
-        </Button>
+        </AddToCart>
       </motion.div>
     </motion.div>
   )

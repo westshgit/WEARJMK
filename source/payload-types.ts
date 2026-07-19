@@ -76,7 +76,6 @@ export interface Config {
     pages: Page;
     categories: Category;
     media: Media;
-    currency: Currency;
     forms: Form;
     'form-submissions': FormSubmission;
     addresses: Address;
@@ -110,7 +109,6 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
-    currency: CurrencySelect<false> | CurrencySelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     addresses: AddressesSelect<false> | AddressesSelect<true>;
@@ -368,7 +366,7 @@ export interface Order {
   transactions?: (number | Transaction)[] | null;
   status?: OrderStatus;
   amount?: number | null;
-  currency?: 'USD' | null;
+  currency?: 'NGN' | null;
   accessToken?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -417,8 +415,8 @@ export interface Product {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  priceInUSDEnabled?: boolean | null;
-  priceInUSD?: number | null;
+  priceInNGNEnabled?: boolean | null;
+  priceInNGN?: number | null;
   relatedProducts?: (number | Product)[] | null;
   meta?: {
     title?: string | null;
@@ -520,8 +518,8 @@ export interface Variant {
   product: number | Product;
   options: (number | VariantOption)[];
   inventory?: number | null;
-  priceInUSDEnabled?: boolean | null;
-  priceInUSD?: number | null;
+  priceInNGNEnabled?: boolean | null;
+  priceInNGN?: number | null;
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -692,7 +690,7 @@ export interface Transaction {
   order?: (number | null) | Order;
   cart?: (number | null) | Cart;
   amount?: number | null;
-  currency?: 'USD' | null;
+  currency?: 'NGN' | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -715,7 +713,7 @@ export interface Cart {
   purchasedAt?: string | null;
   status?: ('active' | 'purchased' | 'abandoned') | null;
   subtotal?: number | null;
-  currency?: 'USD' | null;
+  currency?: 'NGN' | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -956,22 +954,6 @@ export interface TwoSideWithContent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "currency".
- */
-export interface Currency {
-  id: number;
-  label: string;
-  code: string;
-  symbol: string;
-  exchangeRateToNGN: number;
-  decimalPlaces: number;
-  isActive?: boolean | null;
-  isDefault?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms".
  */
 export interface Form {
@@ -1200,10 +1182,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
-      } | null)
-    | ({
-        relationTo: 'currency';
-        value: number | Currency;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1470,21 +1448,6 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "currency_select".
- */
-export interface CurrencySelect<T extends boolean = true> {
-  label?: T;
-  code?: T;
-  symbol?: T;
-  exchangeRateToNGN?: T;
-  decimalPlaces?: T;
-  isActive?: T;
-  isDefault?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms_select".
  */
 export interface FormsSelect<T extends boolean = true> {
@@ -1661,8 +1624,8 @@ export interface VariantsSelect<T extends boolean = true> {
   product?: T;
   options?: T;
   inventory?: T;
-  priceInUSDEnabled?: T;
-  priceInUSD?: T;
+  priceInNGNEnabled?: T;
+  priceInNGN?: T;
   updatedAt?: T;
   createdAt?: T;
   deletedAt?: T;
@@ -1732,8 +1695,8 @@ export interface ProductsSelect<T extends boolean = true> {
   enableVariants?: T;
   variantTypes?: T;
   variants?: T;
-  priceInUSDEnabled?: T;
-  priceInUSD?: T;
+  priceInNGNEnabled?: T;
+  priceInNGN?: T;
   relatedProducts?: T;
   meta?:
     | T

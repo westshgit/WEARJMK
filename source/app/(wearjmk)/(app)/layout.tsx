@@ -2,26 +2,18 @@ import { AdminBar } from '@/components/AdminBar'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
-import { fetchCurrencies } from '@/lib/api/currency.api'
 import { EcommerceProvider } from '@payloadcms/plugin-ecommerce/client/react'
 import { stripeAdapterClient } from '@payloadcms/plugin-ecommerce/payments/stripe'
 import { ReactNode } from 'react'
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const _currencies = await fetchCurrencies()
-  const [currency, syncCurrency] = _currencies || [[], []]
-  if (!currency || !syncCurrency) {
-    throw new Error('Failed to fetch currencies')
-  }
-  const defaultCurrency = syncCurrency.find((item) => item.isDefault)
-
   return (
     <EcommerceProvider
       enableVariants={true}
 
       currenciesConfig={{
-        supportedCurrencies: [...currency],
-        defaultCurrency: defaultCurrency?.code || 'NGN',
+        supportedCurrencies: [{ code: 'NGN', decimals: 2, label: 'Naira', symbol: '₦' }],
+        defaultCurrency: 'NGN',
       }}
       api={{
         cartsFetchQuery: {
@@ -46,7 +38,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         }),
       ]}
     >
-      {' '}
       <AdminBar />
       <LivePreviewListener />
       <Header />

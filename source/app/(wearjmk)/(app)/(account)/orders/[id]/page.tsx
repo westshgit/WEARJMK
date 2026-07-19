@@ -9,11 +9,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronLeftIcon } from 'lucide-react'
 import { ProductItem } from '@/components/ProductItem'
-import { headers as getHeaders } from 'next/headers.js'
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
 import { OrderStatus } from '@/components/OrderStatus'
 import { AddressItem } from '@/components/addresses/AddressItem'
+import { getUserServer } from '@/lib/api'
+import { getPayloadAPI } from '@/lib/api/shared'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,15 +22,16 @@ type PageProps = {
 }
 
 export default async function Order({ params, searchParams }: PageProps) {
-  const headers = await getHeaders()
-  const payload = await getPayload({ config: configPromise })
-  const { user } = await payload.auth({ headers })
+  const { user } = await getUserServer()
+  const payload = await getPayloadAPI()
 
   const { id } = await params
   const { email = '', accessToken = '' } = await searchParams
 
   let order: Order | null = null
 
+  // TODO:
+  // remove this api to the lib/api/order.api.ts file and import it here
   try {
     const {
       docs: [orderResult],
@@ -86,20 +86,9 @@ export default async function Order({ params, searchParams }: PageProps) {
       },
     })
 
-    const canAccessAsGuest =
-      !user &&
-      email &&
-      accessToken &&
-      orderResult &&
-      orderResult.customerEmail &&
-      orderResult.customerEmail === email
+    const canAccessAsGuest = !user && email && accessToken && orderResult && orderResult.customerEmail && orderResult.customerEmail === email
     const canAccessAsUser =
-      user &&
-      orderResult &&
-      orderResult.customer &&
-      (typeof orderResult.customer === 'object'
-        ? orderResult.customer.id
-        : orderResult.customer) === user.id
+      user && orderResult && orderResult.customer && (typeof orderResult.customer === 'object' ? orderResult.customer.id : orderResult.customer) === user.id
 
     if (orderResult && (canAccessAsGuest || canAccessAsUser)) {
       order = orderResult
@@ -138,9 +127,7 @@ export default async function Order({ params, searchParams }: PageProps) {
           <div className="">
             <p className="font-mono uppercase text-primary/50 mb-1 text-sm">Order Date</p>
             <p className="text-lg">
-              <time dateTime={order.createdAt}>
-                {formatDateTime({ date: order.createdAt, format: 'MMMM dd, yyyy' })}
-              </time>
+              <time dateTime={order.createdAt}>{formatDateTime({ date: order.createdAt, format: 'MMMM dd, yyyy' })}</time>
             </p>
           </div>
 
@@ -170,16 +157,11 @@ export default async function Order({ params, searchParams }: PageProps) {
                   return <div key={index}>This item is no longer available.</div>
                 }
 
-                const variant =
-                  item.variant && typeof item.variant === 'object' ? item.variant : undefined
+                const variant = item.variant && typeof item.variant === 'object' ? item.variant : undefined
 
                 return (
                   <li key={item.id}>
-                    <ProductItem
-                      product={item.product}
-                      quantity={item.quantity}
-                      variant={variant}
-                    />
+                    <ProductItem product={item.product} quantity={item.quantity} variant={variant} />
                   </li>
                 )
               })}
@@ -190,7 +172,6 @@ export default async function Order({ params, searchParams }: PageProps) {
         {order.shippingAddress && (
           <div>
             <h2 className="font-mono text-primary/50 mb-4 uppercase text-sm">Shipping Address</h2>
-
             {/* @ts-expect-error - some kind of type hell */}
             <AddressItem address={order.shippingAddress} hideActions />
           </div>

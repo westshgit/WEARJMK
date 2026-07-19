@@ -169,7 +169,7 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
         },
         {
           fields: [
-            ...productDetailsField({ fields: defaultCollection.fields }),
+            ...defaultCollection.fields,
             {
               name: 'relatedProducts',
               type: 'relationship',
@@ -237,11 +237,3 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     slugField(),
   ],
 })
-
-function productDetailsField({ fields }: { fields: Field[] }) {
-  console.dir(fields, {
-    depth: 5,
-  })
-
-  return fields
-}

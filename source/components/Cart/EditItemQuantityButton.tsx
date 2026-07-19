@@ -12,19 +12,9 @@ export function EditItemQuantityButton({ type, item }: { item: CartItem; type: '
   const disabled = useMemo(() => {
     if (!item.id) return true
 
-    const target =
-      item.variant && typeof item.variant === 'object'
-        ? item.variant
-        : item.product && typeof item.product === 'object'
-          ? item.product
-          : null
+    const target = item.variant && typeof item.variant === 'object' ? item.variant : item.product && typeof item.product === 'object' ? item.product : null
 
-    if (
-      target &&
-      typeof target === 'object' &&
-      target.inventory !== undefined &&
-      target.inventory !== null
-    ) {
+    if (target && typeof target === 'object' && target.inventory !== undefined && target.inventory !== null) {
       if (type === 'plus' && item.quantity !== undefined && item.quantity !== null) {
         return item.quantity >= target.inventory
       }
@@ -39,7 +29,7 @@ export function EditItemQuantityButton({ type, item }: { item: CartItem; type: '
         disabled={disabled || isLoading}
         aria-label={type === 'plus' ? 'Increase item quantity' : 'Reduce item quantity'}
         className={clsx(
-          'ease hover:cursor-pointer flex h-full min-w-[36px] max-w-[36px] flex-none items-center justify-center rounded-full px-2 transition-all duration-200 hover:border-neutral-800 hover:opacity-80',
+          'ease hover:cursor-pointer flex h-full min-w-9 max-w-9 flex-none items-center justify-center rounded-full px-2 transition-all duration-200 hover:border-neutral-800 hover:opacity-80',
           {
             'cursor-not-allowed': disabled || isLoading,
             'ml-auto': type === 'minus',

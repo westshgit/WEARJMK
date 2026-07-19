@@ -4,44 +4,19 @@ import { Button } from '@/components/ui/button'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import Link from 'next/link'
 import { AccountForm } from '@/components/forms/AccountForm'
-import { Order } from '@/payload-types'
 import { OrderItem } from '@/components/OrderItem'
 import { redirect } from 'next/navigation'
 import { getUserServer } from '@/lib/api'
-import { getPayload } from 'payload'
-import configPromise from '@payload-config'
+import { getOrdersForUser } from '@/lib/api/order.api'
+import Condition from '@/components/Condition'
 
 export default async function AccountPage() {
   const { user } = await getUserServer()
-
   if (!user) {
     redirect(`/login?warning=${encodeURIComponent('Please login to access your account settings.')}`)
   }
 
-  let orders: Order[] | null = null
-
-  try {
-    const payload = await getPayload({ config: configPromise })
-    const ordersResult = await payload.find({
-      collection: 'orders',
-      limit: 5,
-      user,
-      overrideAccess: false,
-      pagination: false,
-      where: {
-        customer: {
-          equals: user?.id,
-        },
-      },
-    })
-
-    orders = ordersResult?.docs || []
-  } catch (error) {
-    // when deploying this template on Payload Cloud, this page needs to build before the APIs are live
-    // so swallow the error here and simply render the page with fallback data where necessary
-    // in production you may want to redirect to a 404  page or at least log the error somewhere
-    // console.error(error)
-  }
+  const orders = await getOrdersForUser({ user })
 
   return (
     <>
@@ -62,15 +37,15 @@ export default async function AccountPage() {
 
         {(!orders || !Array.isArray(orders) || orders?.length === 0) && <p className="mb-8">You have no orders.</p>}
 
-        {orders && orders.length > 0 && (
+        <Condition predicate={Boolean(orders && Array.isArray(orders) && orders.length > 0)}>
           <ul className="flex flex-col gap-6 mb-8">
-            {orders?.map((order, index) => (
+            {orders?.map((order) => (
               <li key={order.id}>
                 <OrderItem order={order} />
               </li>
             ))}
           </ul>
-        )}
+        </Condition>
 
         <Button asChild variant="default">
           <Link href="/orders">View all orders</Link>

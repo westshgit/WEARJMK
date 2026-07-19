@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Category } from '@/payload-types'
-import { cn } from '@/utilities/cn'
+import { cn, createCategoryHref } from '@/utilities'
 import { RiArrowDownSLine, RiGridLine } from '@remixicon/react'
 import { AnimatePresence, motion } from 'motion/react'
 import Link from 'next/link'
@@ -16,24 +16,18 @@ type Props = {
   className?: string
 }
 
-function createCategoryHref(category: Category): string | null {
-  if (category?.slug) {
-    return `/category/${category.slug}`
-  }
-  return null
-}
-
 export function CategoryNav({ categories, className }: Props) {
   const pathname = usePathname()
+  const _categories = categories.sort((a, b) => a.id - b.id)
 
   return (
     <nav aria-label="Category navigation" className={cn('w-full border-y border-border', className)}>
       <div
         className={cn('container flex items-center gap-6 md:gap-10', 'overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none')}
       >
-        <AllCategories categories={categories} />
+        <AllCategories categories={_categories} />
 
-        {categories.slice(0, 10).map((category) => {
+        {_categories.slice(0, 10).map((category) => {
           const categoryHref = createCategoryHref(category)
           if (!categoryHref) return null
 
