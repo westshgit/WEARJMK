@@ -38,7 +38,7 @@ export function VariantSelector({ product }: { product: Product }) {
           <React.Fragment>
             {options?.map((option) => {
               if (!option || typeof option !== 'object') {
-                return <></>
+                return null
               }
 
               const optionID = option.id
@@ -68,8 +68,7 @@ export function VariantSelector({ product }: { product: Product }) {
 
                     // Check if all variant options match the current options in the URL
                     return variant.options.every((variantOption) => {
-                      if (typeof variantOption !== 'object')
-                        return currentOptions.includes(String(variantOption))
+                      if (typeof variantOption !== 'object') return currentOptions.includes(String(variantOption))
 
                       return currentOptions.includes(String(variantOption.id))
                     })
@@ -90,9 +89,7 @@ export function VariantSelector({ product }: { product: Product }) {
               const optionUrl = createUrl(pathname, optionSearchParams)
 
               // The option is active if it's in the url params.
-              const isActive =
-                Boolean(isAvailableForSale) &&
-                searchParams.get(optionKeyLowerCase) === String(optionID)
+              const isActive = Boolean(isAvailableForSale) && searchParams.get(optionKeyLowerCase) === String(optionID)
 
               return (
                 <Button

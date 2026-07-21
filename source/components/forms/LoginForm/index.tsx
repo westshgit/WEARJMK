@@ -15,7 +15,7 @@ import { toast } from 'sonner'
 import { RiEye2Fill, RiEyeCloseFill } from '@remixicon/react'
 import { FormFieldError } from '@/components/forms/FormError'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { emailSchema, loginSchema, passwordSchema } from '@/lib/schema'
+import { emailSchema, loginSchema, passwordSchema } from '@/lib/schema/authentication'
 import { applyServerFieldErrors, clearServerErrorOnChange, useServerActionWithState } from '@/utilities'
 import { login } from '@/lib/api/authentication'
 import { fieldIsErrorAfterTouched } from '../shared.api'
@@ -34,7 +34,7 @@ export const LoginForm: React.FC = () => {
         router.push(redirect)
         return
       }
-      router.push(`/account?success=${encodeURIComponent('Logged in successfully')}`)
+      router.push(`/shop?success=${encodeURIComponent('Logged in successfully')}`)
     },
     onError: (result) => {
       if (result.formError)

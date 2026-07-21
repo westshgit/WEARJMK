@@ -1,23 +1,20 @@
 'use server'
 
+import type { ActionResult } from '@/lib/shared'
+
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { getServerSideURL } from '@/utilities/getURL'
 
-type SendOrderAccessEmailArgs = {
+export type SendOrderAccessEmailArgs = {
   email: string
   orderID: string
-}
-
-type SendOrderAccessEmailResult = {
-  success: boolean
-  error?: string
 }
 
 export async function sendOrderAccessEmail({
   email,
   orderID,
-}: SendOrderAccessEmailArgs): Promise<SendOrderAccessEmailResult> {
+}: SendOrderAccessEmailArgs): Promise<ActionResult<null>> {
   const payload = await getPayload({ config: configPromise })
 
   try {
@@ -33,7 +30,7 @@ export async function sendOrderAccessEmail({
     const order = orders[0]
 
     if (!order || !order.accessToken) {
-      return { success: true }
+      return { success: true, data: null }
     }
 
     const serverURL = getServerSideURL()
@@ -48,17 +45,15 @@ export async function sendOrderAccessEmail({
         <p>This link will give you access to view your order details.</p>
       `
 
-    console.log('[sendOrderAccessEmail] Email body:', emailBody)
-
     await payload.sendEmail({
       to: email,
       subject: `Access your order #${order.id}`,
       html: emailBody,
     })
 
-    return { success: true }
+    return { success: true, data: null }
   } catch (err) {
     payload.logger.error({ msg: 'Failed to send order access email', err })
-    return { success: true }
+    return { success: true, data: null }
   }
 }

@@ -1,7 +1,8 @@
-import { PreviewSearchParams } from '@/app/(frontend)/next/preview/route'
+import { PreviewSearchParams } from '@/app/(wearjmk)/next/preview/route'
 import { PayloadRequest, CollectionSlug } from 'payload'
 
 const collectionPrefixMap: Partial<Record<CollectionSlug, string>> = {
+  // @ts-expect-error "pages" is not a valid collection slug, but we want to support it for previewing pages
   posts: '/posts',
   pages: '',
 }

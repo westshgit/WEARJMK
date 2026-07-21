@@ -9,7 +9,6 @@ import React from 'react'
 import type { Props as MediaProps } from '../types'
 
 import { cssVariables } from '@/cssVariables'
-import { getMediaSrc } from '../getMediaSrc'
 
 const { breakpoints } = cssVariables
 
@@ -36,19 +35,15 @@ export const Image: React.FC<MediaProps> = (props) => {
   let src: StaticImageData | string = srcFromProps || ''
 
   if (!src && resource && typeof resource === 'object') {
-    const {
-      alt: altFromResource,
-      filename,
-      height: fullHeight,
-      url,
-      width: fullWidth,
-    } = resource
+    const { alt: altFromResource, height: fullHeight, url, width: fullWidth } = resource
 
     width = widthFromProps ?? fullWidth
     height = heightFromProps ?? fullHeight
     alt = altFromResource
 
-    src = getMediaSrc({ filename, url })
+    if (typeof url === 'string' && url.length > 0) {
+      src = url
+    }
   }
 
   // NOTE: this is used by the browser to determine which image to download at different screen sizes

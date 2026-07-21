@@ -11,7 +11,7 @@ export const CallToActionBlock: React.FC<
     className?: string
   }
 > = async (props) => {
-  const user = await getUserServer()
+  const { user } = await getUserServer()
 
   return <CallToActionBlockClient {...props} user={user} />
 }

@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { applyServerFieldErrors, clearServerErrorOnChange, useServerActionWithState } from '@/utilities'
-import { createAccountSchema, emailSchema, passwordSchema } from '@/lib/schema'
+import { createAccountSchema, emailSchema, passwordSchema } from '@/lib/schema/authentication'
 import { toast } from 'sonner'
 import { cn } from '@/utilities'
 import { RiEye2Fill, RiEyeCloseFill } from '@remixicon/react'

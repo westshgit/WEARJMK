@@ -786,7 +786,7 @@ export interface Page {
   id: number;
   title: string;
   publishedOn?: string | null;
-  layout: (MediaBlock | CallToActionBlock | CarouselBlock | ShowCase | TwoSideWithContent)[];
+  layout: (CallToActionBlock | CarouselBlock | ShowCase | TwoSideWithContent)[];
   meta?: {
     title?: string | null;
     /**
@@ -803,16 +803,6 @@ export interface Page {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock".
- */
-export interface MediaBlock {
-  media: number | Media;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'mediaBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1302,7 +1292,6 @@ export interface PagesSelect<T extends boolean = true> {
   layout?:
     | T
     | {
-        mediaBlock?: T | MediaBlockSelect<T>;
         cta?: T | CallToActionBlockSelect<T>;
         carousel?: T | CarouselBlockSelect<T>;
         showcase?: T | ShowCaseSelect<T>;
@@ -1320,15 +1309,6 @@ export interface PagesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock_select".
- */
-export interface MediaBlockSelect<T extends boolean = true> {
-  media?: T;
-  id?: T;
-  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

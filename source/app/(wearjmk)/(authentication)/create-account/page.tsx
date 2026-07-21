@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { CreateAccountForm } from '@/components/forms/CreateAccountForm'
 import { redirect } from 'next/navigation'
@@ -10,7 +11,11 @@ export default async function CreateAccount() {
     redirect(`/account?warning=${encodeURIComponent('You are already logged in.')}`)
   }
 
-  return <CreateAccountForm />
+  return (
+    <Suspense fallback={null}>
+      <CreateAccountForm />
+    </Suspense>
+  )
 }
 
 export const metadata: Metadata = {

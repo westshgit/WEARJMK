@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Suspense } from 'react'
 
 import MessageRenderer from '@/components/MessageRenderer'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -57,7 +58,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </head>
       <body className="relative">
         <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <MessageRenderer />
+          <Suspense fallback={null}><MessageRenderer /></Suspense>
           <SonnerProvider>
             <TooltipProvider>{children}</TooltipProvider>
           </SonnerProvider>

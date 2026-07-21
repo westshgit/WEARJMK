@@ -6,16 +6,15 @@ import type { Address, Config } from '@/payload-types'
 import { useAddresses } from '@payloadcms/plugin-ecommerce/client/react'
 import React from 'react'
 import { useForm, revalidateLogic } from '@tanstack/react-form'
-
 import { FormFieldError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
 import { Button } from '@/components/ui/button'
 import { defaultCountries } from '@/lib/defaultCountries'
 import { deepMergeSimple } from 'payload/shared'
 import { titles } from './constants'
-import { addressSchema } from '@/lib/schema'
+import { addressSchema, validatePhone, validatePostalCode } from '@/lib/schema/address'
 import { cn } from '@/utilities'
-import { fieldIsErrorAfterTouched } from '../shared.api'
+import { fieldIsErrorAfterTouched } from '@/components/forms/shared.api'
 
 type Props = {
   addressID?: Config['db']['defaultIDType']
@@ -142,18 +141,26 @@ export const AddressForm: React.FC<Props> = ({ addressID, initialData, callback,
             )}
           </form.Field>
         </div>
-
-        <form.Field name="phone">
+        <form.Field
+          name="phone"
+          validators={{
+            onChangeListenTo: ['country'],
+            onBlur: ({ value, fieldApi }) => validatePhone(value, fieldApi.form.getFieldValue('country')),
+            onChange: ({ value, fieldApi }) => validatePhone(value, fieldApi.form.getFieldValue('country')),
+          }}
+        >
           {(field) => (
             <FormItem>
-              <Label htmlFor={field.name}>Phone</Label>
+              <Label htmlFor={field.name}>Phone*</Label>
               <Input
+                className={cn(fieldIsErrorAfterTouched(field.state.meta) ? 'border-destructive! ring-destructive!' : '')}
                 type="tel"
                 id={field.name}
-                autoComplete="mobile tel"
+                autoComplete="tel"
                 name={field.name}
                 onBlur={field.handleBlur}
                 onChange={(event) => field.handleChange(event.target.value)}
+                placeholder="+234 801 234 5678"
                 value={field.state.value}
               />
               <FormFieldError meta={field.state.meta} />
@@ -246,7 +253,7 @@ export const AddressForm: React.FC<Props> = ({ addressID, initialData, callback,
         <form.Field name="state">
           {(field) => (
             <FormItem>
-              <Label htmlFor={field.name}>State</Label>
+              <Label htmlFor={field.name}>State*</Label>
               <Input
                 id={field.name}
                 autoComplete="address-level1"
@@ -263,8 +270,9 @@ export const AddressForm: React.FC<Props> = ({ addressID, initialData, callback,
         <form.Field
           name="postalCode"
           validators={{
-            onBlur: ({ value }) => (!value ? 'Postal code is required.' : undefined),
-            onChange: ({ value }) => (!value ? 'Postal code is required.' : undefined),
+            onChangeListenTo: ['country'],
+            onBlur: ({ value, fieldApi }) => validatePostalCode(value, fieldApi.form.getFieldValue('country')),
+            onChange: ({ value, fieldApi }) => validatePostalCode(value, fieldApi.form.getFieldValue('country')),
           }}
         >
           {(field) => (

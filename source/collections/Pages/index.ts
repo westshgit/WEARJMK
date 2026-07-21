@@ -4,7 +4,6 @@ import { adminOnly } from '@/access/adminOnly'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
 import { CallToActionBlock } from '@/blocks/CallToAction/config'
 import { Carousel } from '@/blocks/Carousel/config'
-import { MediaBlock } from '@/blocks/MediaBlock/config'
 import { ShowCase } from '@/blocks/ShowCase/config'
 import { TwoSideWithContent } from '@/blocks/TwoSideWithContent/config'
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
@@ -73,7 +72,7 @@ export const Pages: CollectionConfig = {
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [MediaBlock, CallToActionBlock, Carousel, ShowCase, TwoSideWithContent],
+              blocks: [CallToActionBlock, Carousel, ShowCase, TwoSideWithContent],
               required: true,
             },
           ],

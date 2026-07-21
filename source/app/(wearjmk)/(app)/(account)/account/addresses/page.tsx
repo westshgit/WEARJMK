@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { redirect } from 'next/navigation'
@@ -16,9 +17,13 @@ export default async function AddressesPage() {
     <div className="border p-8 rounded-lg bg-primary-foreground">
       <h1 className="text-3xl font-medium mb-8">Addresses</h1>
       <div className="mb-8">
-        <AddressListing />
+        <Suspense fallback={<p>Loading addresses...</p>}>
+          <AddressListing />
+        </Suspense>
       </div>
-      <CreateAddressModal />
+      <Suspense fallback={null}>
+        <CreateAddressModal />
+      </Suspense>
     </div>
   )
 }

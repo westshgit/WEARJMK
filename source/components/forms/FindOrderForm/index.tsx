@@ -1,14 +1,26 @@
 'use client'
 
-import { FormError } from '@/components/forms/FormError'
+import { useForm, revalidateLogic } from '@tanstack/react-form'
+import { fieldIsErrorAfterTouched } from '@/components/forms/shared.api'
+import React, { useState } from 'react'
+import { FormFieldError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useAuth } from '@/providers/Auth'
-import React, { Fragment, useCallback, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { sendOrderAccessEmail } from './sendOrderAccessEmail'
+import { applyServerFieldErrors, clearServerErrorOnChange, useServerActionWithState } from '@/utilities'
+import { emailSchema } from '@/lib/schema/authentication'
+import { toast } from 'sonner'
+import { cn } from '@/utilities'
+import { sendOrderAccessEmail, SendOrderAccessEmailArgs } from './sendOrderAccessEmail'
+import { z } from 'zod'
+import type { User } from '@/payload-types'
+
+const findOrderSchema = z.object({
+  email: emailSchema,
+  orderID: z.string().min(1, 'Order ID is required.'),
+})
 
 type FormData = {
   email: string
@@ -16,96 +28,145 @@ type FormData = {
 }
 
 type Props = {
-  initialEmail?: string
+  user?: User | null
 }
 
-export const FindOrderForm: React.FC<Props> = ({ initialEmail }) => {
-  const { user } = useAuth()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+export const FindOrderForm: React.FC<Props> = ({ user }) => {
   const [success, setSuccess] = useState(false)
 
-  const {
-    formState: { errors },
-    handleSubmit,
-    register,
-  } = useForm<FormData>({
-    defaultValues: {
-      email: initialEmail || user?.email,
+  const { runAction, isPending } = useServerActionWithState({
+    action: sendOrderAccessEmail,
+    onSuccess: () => setSuccess(true),
+    onError: (result) => {
+      if (result.formError) toast.error(result.formError)
+      if (result.fieldErrors) {
+        const unmatched = applyServerFieldErrors(form, result.fieldErrors)
+        if (unmatched.length > 0) {
+          for (const [_, message] of unmatched) {
+            toast.error(message)
+          }
+        }
+      }
     },
   })
 
-  const onSubmit = useCallback(async (data: FormData) => {
-    setIsSubmitting(true)
-    setSubmitError(null)
-
-    try {
-      const result = await sendOrderAccessEmail({
-        email: data.email,
-        orderID: data.orderID,
-      })
-
-      if (result.success) {
-        setSuccess(true)
-      } else {
-        setSubmitError(result.error || 'Something went wrong. Please try again.')
-      }
-    } catch {
-      setSubmitError('Something went wrong. Please try again.')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }, [])
+  const form = useForm({
+    defaultValues: {
+      email: user?.email || '',
+      orderID: '',
+    } satisfies FormData,
+    validators: {
+      onDynamic: findOrderSchema,
+      onMount: findOrderSchema,
+    },
+    validationLogic: revalidateLogic(),
+    onSubmit: ({ value }) => runAction(value satisfies SendOrderAccessEmailArgs),
+  })
 
   if (success) {
     return (
-      <Fragment>
-        <h1 className="text-xl mb-4">Check your email</h1>
-        <div className="prose dark:prose-invert">
-          <p>
-            {`If an order exists with the provided email and order ID, we've sent you an email with a link to view your order details.`}
-          </p>
-        </div>
-      </Fragment>
+      <div className="p-2">
+        <Card className="mx-auto mt-20 w-full max-w-md">
+          <CardHeader>
+            <CardTitle>
+              <h1 className="text-3xl font-bold">Check your email</h1>
+            </CardTitle>
+            <CardDescription>
+              <p>If an order exists with the provided email and order ID, we&apos;ve sent you an email with a link to view your order details.</p>
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
     )
   }
 
   return (
-    <Fragment>
-      <h1 className="text-xl mb-4">Find my order</h1>
-      <div className="prose dark:prose-invert mb-8">
-        <p>{`Please enter your email and order ID below. We'll send you a link to view your order.`}</p>
-      </div>
-      <form className="max-w-lg flex flex-col gap-8" onSubmit={handleSubmit(onSubmit)}>
-        <FormItem>
-          <Label htmlFor="email" className="mb-2">
-            Email address
-          </Label>
-          <Input
-            id="email"
-            {...register('email', { required: 'Email is required.' })}
-            type="email"
-          />
-          {errors.email && <FormError message={errors.email.message} />}
-        </FormItem>
-        <FormItem>
-          <Label htmlFor="orderID" className="mb-2">
-            Order ID
-          </Label>
-          <Input
-            id="orderID"
-            {...register('orderID', {
-              required: 'Order ID is required.',
-            })}
-            type="text"
-          />
-          {errors.orderID && <FormError message={errors.orderID.message} />}
-        </FormItem>
-        {submitError && <FormError message={submitError} />}
-        <Button type="submit" className="self-start" variant="default" disabled={isSubmitting}>
-          {isSubmitting ? 'Sending...' : 'Find order'}
-        </Button>
-      </form>
-    </Fragment>
+    <div className="p-2">
+      <Card className="mx-auto mt-20 w-full max-w-md">
+        <CardHeader>
+          <CardTitle>
+            <h1 className="text-3xl font-bold">Find my order</h1>
+          </CardTitle>
+          <CardDescription>
+            <p>Please enter your email and order ID below. We&apos;ll send you a link to view your order.</p>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="space-y-6"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void form.handleSubmit()
+            }}
+          >
+            <form.Field
+              name="email"
+              validators={{
+                onBlur: emailSchema,
+                onChange: emailSchema,
+              }}
+              listeners={{ onChange: ({ fieldApi }) => clearServerErrorOnChange(fieldApi) }}
+            >
+              {(field) => (
+                <FormItem>
+                  <Label htmlFor={field.name}>
+                    <h4 className="text-base">Email address</h4>
+                  </Label>
+                  <Input
+                    className={cn('h-12', fieldIsErrorAfterTouched(field.state.meta) ? 'border-destructive! ring-destructive!' : '')}
+                    autoComplete="email"
+                    id={field.name}
+                    name={field.name}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    placeholder="Enter your email"
+                    type="email"
+                    value={field.state.value}
+                  />
+                  <FormFieldError meta={field.state.meta} />
+                </FormItem>
+              )}
+            </form.Field>
+
+            <form.Field
+              name="orderID"
+              validators={{
+                onBlur: z.string().min(1, 'Order ID is required.'),
+                onChange: z.string().min(1, 'Order ID is required.'),
+              }}
+              listeners={{ onChange: ({ fieldApi }) => clearServerErrorOnChange(fieldApi) }}
+            >
+              {(field) => (
+                <FormItem>
+                  <Label htmlFor={field.name}>
+                    <h4 className="text-base">Order ID</h4>
+                  </Label>
+                  <Input
+                    className={cn('h-12', fieldIsErrorAfterTouched(field.state.meta) ? 'border-destructive! ring-destructive!' : '')}
+                    autoComplete="off"
+                    id={field.name}
+                    name={field.name}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    placeholder="Enter your order ID"
+                    type="text"
+                    value={field.state.value}
+                  />
+                  <FormFieldError meta={field.state.meta} />
+                </FormItem>
+              )}
+            </form.Field>
+
+            <form.Subscribe selector={(state) => ({ isSubmitting: state.isSubmitting, canSubmit: state.canSubmit })}>
+              {({ isSubmitting, canSubmit }) => (
+                <Button className="w-full" disabled={isSubmitting || isPending || !canSubmit} type="submit">
+                  {isSubmitting ? 'Sending...' : 'Find order'}
+                </Button>
+              )}
+            </form.Subscribe>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

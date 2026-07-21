@@ -272,9 +272,7 @@ test.describe('Frontend', () => {
     await enableVariantsCheckbox.check()
 
     // create a new variant type
-    const addNewVariantTypeButton = page.locator(
-      'button.relationship-add-new__add-button.doc-drawer__toggler[aria-label="Add new Variant Type"]',
-    )
+    const addNewVariantTypeButton = page.locator('button.relationship-add-new__add-button.doc-drawer__toggler[aria-label="Add new Variant Type"]')
     await addNewVariantTypeButton.click()
 
     const variantTypeNameInput = page.locator('input#field-name')
@@ -294,9 +292,7 @@ test.describe('Frontend', () => {
 
     const variantOptionValueInput = page.locator('input#field-value')
     await variantOptionValueInput.fill('striped')
-    const variantOptionLabelInput = page
-      .getByRole('dialog', { name: /variantOptions/i })
-      .locator('input#field-label')
+    const variantOptionLabelInput = page.getByRole('dialog', { name: /variantOptions/i }).locator('input#field-label')
     await variantOptionLabelInput.fill('Striped')
     await saveButton.nth(1).click()
 
@@ -379,12 +375,7 @@ test.describe('Frontend', () => {
     await expect(errorMessage).toBeVisible()
   })
 
-  async function createUserAndLogin(
-    request: any,
-    email: string,
-    password: string,
-    isAdmin: boolean = true,
-  ) {
+  async function createUserAndLogin(request: any, email: string, password: string, isAdmin: boolean = true) {
     const data: any = {
       email,
       password,

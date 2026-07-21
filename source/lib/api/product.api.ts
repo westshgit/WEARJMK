@@ -12,7 +12,7 @@ async function _getProductsByCategory({ categories, limit }: { categories?: (num
 
   const fetchedProducts = await payload.find({
     collection: 'products',
-    depth: 1,
+    depth: 3,
     limit: limit || undefined,
     ...(flattenedCategories?.length ? { where: { categories: { in: flattenedCategories } } } : {}),
   })
