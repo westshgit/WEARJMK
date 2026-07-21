@@ -1,64 +1,62 @@
 # ============================================
-# IMPORTANT: Build context must be the `source/` directory
-# where package.json, pnpm-lock.yaml, next.config.ts all live.
-#
+# Build context must be the `source/` directory
+# where package.json, pnpm-lock.yaml, next.config.ts live.
 #   docker build -f ../DockerFile -t wearjmk .
-#
 # ============================================
 
-# ============================================
-# Stage 1: Dependencies Installation Stage
-# ============================================
+ARG NODE_VERSION=24.13.0-alpine
 
-ARG NODE_VERSION=24.13.0-slim
-
+# ============================================
+# Stage 1: Dependencies
+# ============================================
 FROM node:${NODE_VERSION} AS dependencies
-
 WORKDIR /app
+
+RUN corepack enable pnpm
 
 COPY package.json pnpm-lock.yaml .npmrc* ./
-
-RUN corepack enable pnpm && pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 # ============================================
-# Stage 2: Build Next.js application in standalone mode
+# Stage 2: Build
 # ============================================
-
 FROM node:${NODE_VERSION} AS builder
-
 WORKDIR /app
 
-COPY --from=dependencies /app/node_modules ./node_modules
+RUN corepack enable pnpm
 
+COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
 
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+# Cap build memory so a 1GB host doesn't OOM mid-build
+ENV NODE_OPTIONS=--max-old-space-size=768
 
-RUN corepack enable pnpm && pnpm build
+RUN pnpm build
 
 # ============================================
-# Stage 3: Run Next.js application
+# Stage 3: Runtime — minimal, no build tools, no source
 # ============================================
-
 FROM node:${NODE_VERSION} AS runner
-
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# ENV NEXT_TELEMETRY_DISABLED=1
+# tini reaps zombie processes correctly as PID 1 (node doesn't)
+RUN apk add --no-cache tini
 
-COPY --from=builder --chown=node:node /app/public ./public
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
-RUN mkdir .next && chown node:node .next
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-COPY --from=builder --chown=node:node /app/.next/standalone ./
-COPY --from=builder --chown=node:node /app/.next/static ./.next/static
-
-USER node
-
+USER nextjs
 EXPOSE 3000
 
+ENTRYPOINT ["tini", "--"]
 CMD ["node", "server.js"]

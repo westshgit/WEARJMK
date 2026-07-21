@@ -1,0 +1,1 @@
+code --remote ssh-remote+ls.wxsh /home/ubuntu
