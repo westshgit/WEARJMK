@@ -6,7 +6,7 @@ import React, { useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { Media } from '@/components/Media'
 import { Button } from '../ui/button'
-import { Eye, Heart, ShoppingBag, X } from 'lucide-react'
+import { Eye, Heart, PlusIcon, ShoppingBag, ShoppingCartIcon, X } from 'lucide-react'
 import { Price } from '../Price'
 import { Dialog, DialogClose, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { motion, Variants } from 'motion/react'
@@ -79,7 +79,7 @@ export const ProductGridItem: React.FC<Props> = ({ product, linkClassName, media
         ) : null}
       </Link>
 
-      <div className="absolute top-0 left-0 bg-secondary text-secondary-foreground px-2 py-[0.5] text-xs">
+      <div className="absolute top-0 left-0 bg-secondary uppercase text-secondary-foreground px-2 py-[0.5] text-xs">
         <p>{title}</p>
       </div>
 
@@ -131,15 +131,14 @@ export const ProductGridItem: React.FC<Props> = ({ product, linkClassName, media
         <DropdownMenu open={open} onOpenChange={setOpen}>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center justify-end pr-2">
-              <Button variant={'outline'}>
+              <Button variant={'outline'} size={'xs'}>
                 {typeof price === 'number' && (
                   <div className="flex items-center">
-                    <ShoppingBag className="size-4" />
-                    <Price
-                      amount={price}
-                      className="flex-none font-mono text-foreground font-black p-2 text-xs"
-                      currencyCodeClassName="hidden @[275px]/label:inline"
-                    />
+                    <span className="relative inline-flex">
+                      <ShoppingBag className="size-4" />
+                      <PlusIcon className="absolute -top-1.5 -right-1.5 size-3 rounded-full bg-primary text-primary-foreground p-0.5" strokeWidth={3} />
+                    </span>
+                    <Price amount={price} className="flex-none font-mono font-black p-2 text-xs" currencyCodeClassName="hidden @[275px]/label:inline" />
                   </div>
                 )}
               </Button>
@@ -189,7 +188,7 @@ function ProductDetailsCard({
     <motion.div initial="closed" animate="open" variants={contentVariants} className={clsx('flex flex-col gap-3 p-3', className)}>
       {/* title + wishlist */}
       <motion.div variants={itemVariants} className="flex items-start justify-between gap-2">
-        <h4 className="font-mono text-base leading-snug text-foreground">{title}</h4>
+        <h4 className="font-mono text-base leading-snug text-foreground uppercase">{title}</h4>
         {/* onClick={() => setWishlisted((v) => !v)} */}
         <Button variant={'outline'} aria-label="Add to wishlist">
           <Heart className={clsx('size-4 transition-colors', wishlisted ? 'fill-foreground text-foreground' : 'text-muted-foreground')} />

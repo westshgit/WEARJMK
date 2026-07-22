@@ -115,6 +115,9 @@
       "esbuild",
       "sharp",
       "unrs-resolver"
-    ]
+    ],
+    "patchedDependencies": {
+      "@payloadcms/plugin-ecommerce@3.85.2": "patches/@payloadcms__plugin-ecommerce@3.85.2.patch"
+    }
   }
 }

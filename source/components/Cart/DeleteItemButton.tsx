@@ -3,8 +3,8 @@
 import type { CartItem } from '@/components/Cart'
 import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import clsx from 'clsx'
-import { XIcon } from 'lucide-react'
-import React from 'react'
+import { Trash } from 'lucide-react'
+import { Button } from '../ui/button'
 
 export function DeleteItemButton({ item }: { item: CartItem }) {
   const { isLoading, removeItem } = useCart()
@@ -12,20 +12,21 @@ export function DeleteItemButton({ item }: { item: CartItem }) {
 
   return (
     <form>
-      <button
+      <Button
         aria-label="Remove cart item"
-        className={clsx('ease hover:cursor-pointer flex h-4.25 w-4.25 items-center justify-center rounded-full bg-neutral-500 transition-all duration-200', {
+        className={clsx('', {
           'cursor-not-allowed px-0': !itemId || isLoading,
         })}
         disabled={!itemId || isLoading}
-        onClick={(e: React.FormEvent<HTMLButtonElement>) => {
+        onClick={(e) => {
           e.preventDefault()
           if (itemId) removeItem(itemId)
         }}
         type="button"
+        variant={'destructive'}
       >
-        <XIcon className="hover:text-accent-3 mx-px h-4 w-4 text-white dark:text-black" />
-      </button>
+        <Trash />
+      </Button>
     </form>
   )
 }

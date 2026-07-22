@@ -26,7 +26,7 @@ export const ConfirmOrder: React.FC = () => {
       if (!isConfirming.current) {
         isConfirming.current = true
 
-        confirmOrder('stripe', {
+        confirmOrder('paystack', {
           additionalData: {
             paymentIntentID,
           },

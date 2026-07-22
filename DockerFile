@@ -2,6 +2,9 @@
 # Build context must be the `source/` directory
 # where package.json, pnpm-lock.yaml, next.config.ts live.
 #   docker build -f ../DockerFile -t wearjmk .
+#
+# Run with --init to handle PID 1 signal forwarding / zombie reaping:
+#   docker run -d --init -p 3000:3000 --name wearjmk --restart unless-stopped wearjmk
 # ============================================
 
 ARG NODE_VERSION=24.13.0-alpine
@@ -46,9 +49,6 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# tini reaps zombie processes correctly as PID 1 (node doesn't)
-RUN apk add --no-cache tini
-
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
@@ -58,5 +58,4 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
 
-ENTRYPOINT ["tini", "--"]
 CMD ["node", "server.js"]

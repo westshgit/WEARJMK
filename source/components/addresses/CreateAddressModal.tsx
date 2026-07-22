@@ -1,17 +1,11 @@
 'use client'
 import { Button } from '@/components/ui/button'
 import React, { useState } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AddressForm } from '@/components/forms/AddressForm'
 import { Address } from '@/payload-types'
 import { DefaultDocumentIDType } from 'payload'
+import { RiAddFill } from '@remixicon/react'
 
 type Props = {
   addressID?: DefaultDocumentIDType
@@ -26,7 +20,7 @@ type Props = {
 export const CreateAddressModal: React.FC<Props> = ({
   addressID,
   initialData,
-  buttonText = 'Add a new address',
+  buttonText = 'new address',
   modalTitle = 'Add a new address',
   callback,
   skipSubmission,
@@ -52,20 +46,18 @@ export const CreateAddressModal: React.FC<Props> = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild disabled={disabled}>
-        <Button variant={'outline'}>{buttonText}</Button>
+        <Button variant={'outline'} className="uppercase" size={'lg'}>
+          <RiAddFill />
+          {buttonText}
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{modalTitle}</DialogTitle>
+          <DialogTitle className="text-xl uppercase">{modalTitle}</DialogTitle>
           <DialogDescription>This address will be connected to your account.</DialogDescription>
         </DialogHeader>
 
-        <AddressForm
-          addressID={addressID}
-          initialData={initialData}
-          callback={handleCallback}
-          skipSubmission={skipSubmission}
-        />
+        <AddressForm addressID={addressID} initialData={initialData} callback={handleCallback} skipSubmission={skipSubmission} />
       </DialogContent>
     </Dialog>
   )

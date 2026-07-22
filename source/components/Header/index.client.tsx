@@ -32,11 +32,10 @@ const dropdownVariants = {
 
 const dropdownTransition = { duration: 0.15, ease: [0.16, 1, 0.3, 1] } satisfies Transition
 type Props = {
-  categories: Category[]
   user?: User
 }
 
-export function HeaderClient({ categories, user }: Props) {
+export function HeaderClient({ user }: Props) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
 
   return (
@@ -78,7 +77,7 @@ export function HeaderClient({ categories, user }: Props) {
           <SearchInput autoFocus={mobileSearchOpen} />
         </div>
       </motion.div>
-      <CategoryNav categories={categories} />
+      {/* <CategoryNav categories={categories} /> */}
     </div>
   )
 }
@@ -100,20 +99,20 @@ function MobileMenu({ user }: { user: unknown }) {
           <DialogContent className="w-[calc(100vw-2rem)] max-w-sm md:w-auto mt-2 md:mt-1" forceMount>
             <motion.div variants={dropdownVariants} className="mx-2!" initial="hidden" animate="visible" exit="hidden" transition={dropdownTransition}>
               <DialogHeader>
-                <DialogTitle className="text-2xl font-mono">{greeting}</DialogTitle>
+                <DialogTitle className="text-2xl font-mono uppercase">{greeting}</DialogTitle>
                 <DialogDescription>Sign in or create an account to save your favorites, manage your orders, and enjoy a faster checkout.</DialogDescription>
               </DialogHeader>
 
               <div className="mt-6 flex *:flex-1 gap-2 *:*:w-full *:*:cursor-pointer">
                 <Link href={'/login'}>
-                  <Button>
+                  <Button className="uppercase">
                     {LOGIN_ICON}
                     Sign In
                   </Button>
                 </Link>
 
                 <Link href={'/create-account'}>
-                  <Button>
+                  <Button className="uppercase" variant={'outline'}>
                     {CREATE_ACCOUNT_ICON}
                     Create Account
                   </Button>
@@ -143,7 +142,7 @@ function MobileMenu({ user }: { user: unknown }) {
           <TooltipContent>Click to view account options</TooltipContent>
         </Tooltip>
         <AnimatePresence>
-          <DropdownMenuContent className="mx-2 mt-2 md:mx-0 md:mt-1" forceMount asChild>
+          <DropdownMenuContent className="mx-2 mt-2 md:mx-0 md:mt-1" forceMount asChild align="end" alignOffset={-13}>
             <motion.div variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" transition={dropdownTransition}>
               <DropdownMenuGroup>
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>

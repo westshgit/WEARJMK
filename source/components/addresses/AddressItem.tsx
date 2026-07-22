@@ -24,21 +24,15 @@ type Props = {
   hideActions?: boolean
 }
 
-export const AddressItem: React.FC<Props> = ({
-  address,
-  actions,
-  hideActions = false,
-  beforeActions,
-  afterActions,
-}) => {
+export const AddressItem: React.FC<Props> = ({ address, actions, hideActions = false, beforeActions, afterActions }) => {
   if (!address) {
     return null
   }
 
   return (
     <div className="flex items-center">
-      <div className="grow">
-        <p className="font-medium">
+      <div className="grow text-muted-foreground">
+        <p className="font-medium uppercase text-base text-foreground!">
           {address.title && <span>{address.title} </span>}
           {address.firstName} {address.lastName}
         </p>
@@ -61,14 +55,7 @@ export const AddressItem: React.FC<Props> = ({
           ) : (
             <>
               {beforeActions}
-              {address.id && (
-                <CreateAddressModal
-                  addressID={address.id}
-                  initialData={address}
-                  buttonText={'Edit'}
-                  modalTitle={'Edit address'}
-                />
-              )}
+              {address.id && <CreateAddressModal addressID={address.id} initialData={address} buttonText={'Edit'} modalTitle={'Edit address'} />}
               {afterActions}
             </>
           )}

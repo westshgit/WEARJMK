@@ -15,7 +15,7 @@ import { OpenCartButton } from './OpenCart'
 import { Button } from '@/components/ui/button'
 import { Product, Variant } from '@/payload-types'
 import { getPriceWithCurrencyCode } from '@/utilities'
-import { computeCartSubtotal } from '@/utilities/computeCartInClientSubtotal'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../ui/empty'
 
 export function CartModal() {
   const { cart } = useCart()
@@ -34,11 +34,6 @@ export function CartModal() {
     return cart.items.reduce((quantity, item) => (item.quantity || 0) + quantity, 0)
   }, [cart])
 
-  // const total = useMemo(() => {
-  //   if (!cart || !cart.items) return 0
-  //   return computeCartSubtotal(cart.items, currency.code)
-  // }, [cart, currency.code])
-
   return (
     <Sheet onOpenChange={setIsOpen} open={isOpen}>
       <SheetTrigger asChild>
@@ -47,16 +42,30 @@ export function CartModal() {
 
       <SheetContent className="flex flex-col">
         <SheetHeader>
-          <SheetTitle>My Cart</SheetTitle>
+          <SheetTitle className="uppercase font-medium">My Cart</SheetTitle>
 
           <SheetDescription>Manage your cart here, add items to view the total.</SheetDescription>
         </SheetHeader>
 
         {!cart || cart?.items?.length === 0 ? (
-          <div className="text-center flex flex-col items-center gap-2">
-            <ShoppingCart className="h-16" />
-            <p className="text-center text-2xl font-bold">Your cart is empty.</p>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <ShoppingCart className="size-8" />
+              </EmptyMedia>
+              <EmptyTitle className="uppercase">Your cart is empty</EmptyTitle>
+              <EmptyDescription>Looks like you haven't added anything to your cart yet.</EmptyDescription>
+            </EmptyHeader>
+
+            <EmptyContent>
+              <Link href="/shop">
+                <Button variant={'outline'} className="w-full uppercase" size={'lg'}>
+                  <ShoppingCart className="size-4" />
+                  Go to Shop
+                </Button>
+              </Link>
+            </EmptyContent>
+          </Empty>
         ) : (
           <div className="grow flex px-4">
             <div className="flex flex-col justify-between w-full">
@@ -99,39 +108,41 @@ export function CartModal() {
 
                   return (
                     <li className="flex w-full flex-col" key={i}>
-                      <div className="relative flex w-full flex-row justify-between px-1 py-4">
-                        <div className="absolute z-40 -mt-2 ml-13.75">
+                      <div className="relative flex w-full flex-col gap-2 px-1 py-4">
+                        <div className="absolute z-40 right-0 top-4">
                           <DeleteItemButton item={item} />
                         </div>
-                        <Link className="z-30 flex flex-row space-x-4" href={`/products/${(item.product as Product)?.slug}`}>
-                          <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border border-neutral-300 bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800">
-                            {image?.url && (
-                              <Image alt={image?.alt || product?.title || ''} className="h-full w-full object-cover" height={94} src={image.url} width={94} />
-                            )}
-                          </div>
 
-                          <div className="flex flex-1 flex-col text-base">
-                            <span className="leading-tight">{product?.title}</span>
-                            {isVariant && variant ? (
-                              <p className="text-sm text-neutral-500 dark:text-neutral-400 capitalize">
-                                {variant.options
-                                  ?.map((option) => {
-                                    if (typeof option === 'object') return option.label
-                                    return null
-                                  })
-                                  .join(', ')}
-                              </p>
-                            ) : null}
-                          </div>
-                        </Link>
-                        <div className="flex h-16 flex-col justify-between">
-                          {typeof price === 'number' && <Price amount={price} className="flex justify-end space-y-2 text-right text-sm" />}
-                          <div className="ml-auto flex h-9 flex-row items-center rounded-lg border">
-                            <EditItemQuantityButton item={item} type="minus" />
-                            <p className="w-6 text-center">
-                              <span className="w-full text-sm">{item.quantity}</span>
+                        <div className="flex flex-1 flex-col text-base">
+                          <h2 className="leading-tight uppercase font-bold">{product?.title}</h2>
+                          {isVariant && variant ? (
+                            <p className="text-sm text-neutral-500 dark:text-neutral-400 capitalize">
+                              {variant.options
+                                ?.map((option) => {
+                                  if (typeof option === 'object') return option.label
+                                  return null
+                                })
+                                .join(', ')}
                             </p>
-                            <EditItemQuantityButton item={item} type="plus" />
+                          ) : null}
+                        </div>
+                        <div className="flex flex-row gap-2">
+                          <Link className="z-30 flex flex-row space-x-4" href={`/products/${(item.product as Product)?.slug}`}>
+                            <div className="relative h-16 w-16 cursor-pointer overflow-hidden rounded-md border border-neutral-300 bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800">
+                              {image?.url && (
+                                <Image alt={image?.alt || product?.title || ''} className="h-full w-full object-cover" height={94} src={image.url} width={94} />
+                              )}
+                            </div>
+                          </Link>
+                          <div className="flex h-16 flex-col justify-between">
+                            {typeof price === 'number' && <Price amount={price} className="flex justify-end space-y-2 text-right text-sm" />}
+                            <div className="ml-auto flex h-9 flex-row items-center rounded-lg border">
+                              <EditItemQuantityButton item={item} type="minus" />
+                              <p className="w-6 text-center">
+                                <span className="w-full text-sm">{item.quantity}</span>
+                              </p>
+                              <EditItemQuantityButton item={item} type="plus" />
+                            </div>
                           </div>
                         </div>
                       </div>

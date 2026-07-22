@@ -68,7 +68,7 @@ const nextConfig: NextConfig = {
     root: path.resolve(dirname),
   },
   devIndicators: {
-    position: 'top-right',
+    position: 'bottom-left',
   },
 }
 

@@ -4,32 +4,44 @@ import { Media } from '@/components/Media'
 import { Message } from '@/components/Message'
 import { Price } from '@/components/Price'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useTheme } from '@wrksz/themes/client'
 import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+
+import { AnimatePresence, motion } from 'motion/react'
 import React, { Suspense, useCallback, useEffect, useState } from 'react'
 
 import { cssVariables } from '@/cssVariables'
 import { CheckoutForm } from '@/components/forms/CheckoutForm'
 import { useAddresses, useCart, useCurrency, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
 import { CheckoutAddresses } from '@/components/checkout/CheckoutAddresses'
-import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
-import { Address, Product, User, Variant } from '@/payload-types'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Address, PolicyBlock, Product, User, Variant } from '@/payload-types'
 import { AddressItem } from '@/components/addresses/AddressItem'
-import { FormItem } from '@/components/forms/FormItem'
 import { toast } from 'sonner'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { getPriceWithCurrencyCode } from '@/utilities'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../ui/empty'
+import { ArrowRight, CreditCard, LogIn, Mail, Store, UserPlus } from 'lucide-react'
+import { RiHandbagLine } from '@remixicon/react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
+import Condition from '../Condition'
+import { Wizard } from 'react-use-wizard'
+import { AnimatedWizardWrapper, GuestAddressStep, GuestContactStep, GuestReviewStep } from './Step'
+import { RenderBlocks } from '@/blocks/RenderBlocks'
 
 const apiKey = `${process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}`
 const stripe = loadStripe(apiKey)
 
-export const CheckoutPage: React.FC<{ user?: User }> = ({ user }) => {
+const maskEmail = (email: string) => {
+  const [name, domain] = email.split('@')
+  if (!name || !domain) return email
+  const maskedName = name.length <= 2 ? name[0] + '*' : name.slice(0, 2) + '*'.repeat(name.length - 2)
+  return `${maskedName}@${domain}`
+}
+
+export const CheckoutPage: React.FC<{ user?: User; policyBlock: PolicyBlock | undefined }> = ({ user, policyBlock }) => {
   const router = useRouter()
   const { cart } = useCart()
   const [error, setError] = useState<null | string>(null)
@@ -40,7 +52,7 @@ export const CheckoutPage: React.FC<{ user?: User }> = ({ user }) => {
   const [email, setEmail] = useState('')
   const [emailEditable, setEmailEditable] = useState(true)
   const [paymentData, setPaymentData] = useState<null | Record<string, unknown>>(null)
-  const { initiatePayment } = usePayments()
+  const { initiatePayment, paymentMethods } = usePayments()
   const { addresses } = useAddresses()
   const [shippingAddress, setShippingAddress] = useState<Partial<Address>>()
   const [billingAddress, setBillingAddress] = useState<Partial<Address>>()
@@ -52,11 +64,6 @@ export const CheckoutPage: React.FC<{ user?: User }> = ({ user }) => {
   const canGoToPayment = Boolean((email || user) && billingAddress && (billingAddressSameAsShipping || shippingAddress))
 
   const { currency } = useCurrency()
-
-  // const total = useMemo(() => {
-  //   if (!cart || !cart.items) return 0
-  //   return computeCartSubtotal(cart.items, currency.code)
-  // }, [cart, currency.code])
 
   // On initial load wait for addresses to be loaded and check to see if we can prefill a default one
   useEffect(() => {
@@ -95,6 +102,7 @@ export const CheckoutPage: React.FC<{ user?: User }> = ({ user }) => {
           setPaymentData(paymentData)
         }
       } catch (error) {
+        console.log(error)
         const errorData = error instanceof Error ? JSON.parse(error.message) : {}
         let errorMessage = 'An error occurred while initiating payment.'
 
@@ -124,301 +132,284 @@ export const CheckoutPage: React.FC<{ user?: User }> = ({ user }) => {
 
   if (cartIsEmpty) {
     return (
-      <div className="prose dark:prose-invert py-12 w-full items-center">
-        <p>Your cart is empty.</p>
-        <Link href="/shop">Continue shopping?</Link>
-      </div>
+      <Empty className="min-h-[50vh]">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <RiHandbagLine />
+          </EmptyMedia>
+          <EmptyTitle className="uppercase">Your cart is empty</EmptyTitle>
+          <EmptyDescription>Your cart is currently empty. Add items to your cart to proceed to checkout.</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Link href="/shop">
+            <Button className="uppercase cursor-pointer" size={'lg'}>
+              <Store className="size-4" />
+              Continue shopping
+            </Button>
+          </Link>
+        </EmptyContent>
+      </Empty>
     )
   }
 
   return (
-    <div className="flex flex-col items-stretch justify-stretch mt-8 mb-32 md:flex-row grow gap-10 md:gap-6 lg:gap-8">
-      <div className="basis-full lg:basis-2/3 flex flex-col gap-8 justify-stretch">
-        <h2 className="font-medium text-3xl">Contact</h2>
-        {!user && (
-          <div className=" bg-accent dark:bg-black rounded-lg p-4 w-full flex items-center">
-            <div className="prose dark:prose-invert">
-              <Button asChild className="no-underline text-inherit" variant="outline">
-                <Link href="/login">Log in</Link>
-              </Button>
-              <p className="mt-0">
-                <span className="mx-2">or</span>
-                <Link href="/create-account">create an account</Link>
-              </p>
-            </div>
-          </div>
-        )}
-        {user ? (
-          <div className="bg-accent dark:bg-card rounded-lg p-4 ">
-            <div>
-              <p>{user.email}</p>{' '}
-              <p>
-                Not you?{' '}
-                <Link className="underline" href="/logout">
-                  Log out
-                </Link>
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-accent dark:bg-black rounded-lg p-4 ">
-            <div>
-              <p className="mb-4">Enter your email to checkout as a guest.</p>
+    <div className="mt-8 mb-32 space-y-36">
+      <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(400px,450px)] gap-20 md:gap-6 lg:gap-8">
+        <div className="flex flex-col gap-12 justify-stretch">
+          <Condition predicate={!user}>
+            <Wizard wrapper={<AnimatedWizardWrapper />}>
+              <GuestContactStep email={email} setEmail={setEmail} emailEditable={emailEditable} setEmailEditable={setEmailEditable} />
+              <GuestAddressStep email={email} billingAddress={billingAddress} setBillingAddress={setBillingAddress} />
+              <GuestReviewStep email={email} billingAddress={billingAddress} />
+            </Wizard>
 
-              <FormItem className="mb-6">
-                <Label htmlFor="email">Email Address</Label>
-                <Input disabled={!emailEditable} id="email" name="email" onChange={(e) => setEmail(e.target.value)} required type="email" />
-              </FormItem>
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <h2 className="font-medium text-xl uppercase">JSYK</h2>
+                <p className="text-muted-foreground text-sm max-w-md">
+                  You can log in or create an account to save your favorites, manage your orders, and enjoy a faster checkout.
+                </p>
+              </div>
+
+              <div className="w-full flex gap-2 *:basis-full *:*:w-full max-w-md *:*:cursor-pointer">
+                <Link href={'/login'}>
+                  <Button variant={'outline'} className="uppercase gap-2">
+                    <LogIn className="size-4 shrink-0" />
+                    Sign In
+                  </Button>
+                </Link>
+
+                <Link href={'/create-account'}>
+                  <Button variant={'outline'} className="uppercase gap-2">
+                    <UserPlus className="size-4 shrink-0" />
+                    Create Account
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Condition>
+          <Condition predicate={Boolean(user)}>
+            <Card className="md:max-w-md!">
+              <CardHeader>
+                <CardTitle className="uppercase text-2xl">Hey {user?.name}</CardTitle>
+                <CardDescription className="flex items-center gap-2">
+                  <Mail className="size-4 shrink-0" />
+                  {user?.email ? maskEmail(user.email) : null}
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent>
+                {billingAddress ? (
+                  <AddressItem
+                    actions={
+                      <Button
+                        className="uppercase"
+                        variant={'destructive'}
+                        disabled={Boolean(paymentData)}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setBillingAddress(undefined)
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    }
+                    address={billingAddress}
+                  />
+                ) : (
+                  <CheckoutAddresses heading="Billing address" description="Please select a billing address." setAddress={setBillingAddress} />
+                )}
+              </CardContent>
+            </Card>
+          </Condition>
+          {!paymentData && (
+            <AnimatePresence>
+              {!paymentData && (
+                <motion.div
+                  initial={{
+                    opacity: 0,
+                    y: 12,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: 12,
+                  }}
+                >
+                  <Button
+                    variant={'outline'}
+                    className="self-start text-start uppercase cursor-pointer  h-16 w-full justify-between gap-2 md:max-w-md"
+                    disabled={!canGoToPayment}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      void initiatePaymentIntent('paystack')
+                    }}
+                  >
+                    <span className="flex items-center gap-2 tracking-tighter">
+                      <CreditCard className="size-8 shrink-0 text-muted-foreground" />
+                      Go to payment
+                    </span>
+                    <ArrowRight className="size-4 shrink-0" />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+
+          {!paymentData?.['clientSecret'] && error && (
+            <div className="my-8">
+              <Message error={error} />
 
               <Button
-                disabled={!email || !emailEditable}
                 onClick={(e) => {
                   e.preventDefault()
-                  setEmailEditable(false)
+                  router.refresh()
                 }}
                 variant="default"
               >
-                Continue as guest
+                Try again
               </Button>
             </div>
-          </div>
-        )}
+          )}
 
-        <h2 className="font-medium text-3xl">Address</h2>
-
-        {billingAddress ? (
-          <div>
-            <AddressItem
-              actions={
-                <Button
-                  variant={'outline'}
-                  disabled={Boolean(paymentData)}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    setBillingAddress(undefined)
+          <Suspense fallback={<React.Fragment />}>
+            {/* @ts-ignore */}
+            {paymentData && paymentData?.['clientSecret'] && (
+              <div className="pb-16">
+                <h2 className="font-medium text-3xl">Payment</h2>
+                {error && <p>{`Error: ${error}`}</p>}
+                <Elements
+                  options={{
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        borderRadius: '6px',
+                        colorPrimary: '#858585',
+                        gridColumnSpacing: '20px',
+                        gridRowSpacing: '20px',
+                        colorBackground: theme === 'dark' ? '#0a0a0a' : cssVariables.colors.base0,
+                        colorDanger: cssVariables.colors.error500,
+                        colorDangerText: cssVariables.colors.error500,
+                        colorIcon: theme === 'dark' ? cssVariables.colors.base0 : cssVariables.colors.base1000,
+                        colorText: theme === 'dark' ? '#858585' : cssVariables.colors.base1000,
+                        colorTextPlaceholder: '#858585',
+                        fontFamily: 'Geist, sans-serif',
+                        fontSizeBase: '16px',
+                        fontWeightBold: '600',
+                        fontWeightNormal: '500',
+                        spacingUnit: '4px',
+                      },
+                    },
+                    clientSecret: paymentData['clientSecret'] as string,
                   }}
+                  stripe={stripe}
                 >
-                  Remove
-                </Button>
-              }
-              address={billingAddress}
-            />
-          </div>
-        ) : user ? (
-          <CheckoutAddresses heading="Billing address" setAddress={setBillingAddress} />
-        ) : (
-          <CreateAddressModal
-            disabled={!email || Boolean(emailEditable)}
-            callback={(address) => {
-              setBillingAddress(address)
-            }}
-            skipSubmission={true}
-          />
-        )}
-
-        <div className="flex gap-4 items-center">
-          <Checkbox
-            id="shippingTheSameAsBilling"
-            checked={billingAddressSameAsShipping}
-            disabled={Boolean(paymentData || (!user && (!email || Boolean(emailEditable))))}
-            onCheckedChange={(state) => {
-              setBillingAddressSameAsShipping(state as boolean)
-            }}
-          />
-          <Label htmlFor="shippingTheSameAsBilling">Shipping is the same as billing</Label>
+                  <div className="flex flex-col gap-8">
+                    <CheckoutForm customerEmail={email} billingAddress={billingAddress} setProcessingPayment={setProcessingPayment} />
+                    <Button variant="ghost" className="self-start" onClick={() => setPaymentData(null)}>
+                      Cancel payment
+                    </Button>
+                  </div>
+                </Elements>
+              </div>
+            )}
+          </Suspense>
         </div>
 
-        {!billingAddressSameAsShipping && (
-          <>
-            {shippingAddress ? (
-              <div>
-                <AddressItem
-                  actions={
-                    <Button
-                      variant={'outline'}
-                      disabled={Boolean(paymentData)}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setShippingAddress(undefined)
-                      }}
-                    >
-                      Remove
-                    </Button>
+        {!cartIsEmpty && (
+          <div className="p-4 bg-primary/5 flex flex-col gap-8 rounded-lg">
+            <h2 className="text-lg font-medium uppercase">Your cart</h2>
+            <div className="max-h-[60vh] overflow-auto scrollbar-none [&::-webkit-scrollbar]:hidden flex flex-col gap-4">
+              {cart?.items?.map((item, index) => {
+                if (typeof item.product === 'object' && item.product) {
+                  const {
+                    product,
+                    product: { id, meta, title, gallery },
+                    quantity,
+                    variant,
+                  } = item as {
+                    product: Product
+                    variant?: Variant
+                    quantity?: number
+                    [key: string]: unknown
                   }
-                  address={shippingAddress}
-                />
-              </div>
-            ) : user ? (
-              <CheckoutAddresses heading="Shipping address" description="Please select a shipping address." setAddress={setShippingAddress} />
-            ) : (
-              <CreateAddressModal
-                callback={(address) => {
-                  setShippingAddress(address)
-                }}
-                disabled={!email || Boolean(emailEditable)}
-                skipSubmission={true}
-              />
-            )}
-          </>
-        )}
 
-        {!paymentData && (
-          <Button
-            className="self-start"
-            disabled={!canGoToPayment}
-            onClick={(e) => {
-              e.preventDefault()
-              void initiatePaymentIntent('stripe')
-            }}
-          >
-            Go to payment
-          </Button>
-        )}
+                  if (!quantity) return null
 
-        {!paymentData?.['clientSecret'] && error && (
-          <div className="my-8">
-            <Message error={error} />
+                  let image = gallery?.[0]?.image || meta?.image
 
-            <Button
-              onClick={(e) => {
-                e.preventDefault()
-                router.refresh()
-              }}
-              variant="default"
-            >
-              Try again
-            </Button>
-          </div>
-        )}
+                  const isVariant = Boolean(variant) && typeof variant === 'object'
 
-        <Suspense fallback={<React.Fragment />}>
-          {/* @ts-ignore */}
-          {paymentData && paymentData?.['clientSecret'] && (
-            <div className="pb-16">
-              <h2 className="font-medium text-3xl">Payment</h2>
-              {error && <p>{`Error: ${error}`}</p>}
-              <Elements
-                options={{
-                  appearance: {
-                    theme: 'stripe',
-                    variables: {
-                      borderRadius: '6px',
-                      colorPrimary: '#858585',
-                      gridColumnSpacing: '20px',
-                      gridRowSpacing: '20px',
-                      colorBackground: theme === 'dark' ? '#0a0a0a' : cssVariables.colors.base0,
-                      colorDanger: cssVariables.colors.error500,
-                      colorDangerText: cssVariables.colors.error500,
-                      colorIcon: theme === 'dark' ? cssVariables.colors.base0 : cssVariables.colors.base1000,
-                      colorText: theme === 'dark' ? '#858585' : cssVariables.colors.base1000,
-                      colorTextPlaceholder: '#858585',
-                      fontFamily: 'Geist, sans-serif',
-                      fontSizeBase: '16px',
-                      fontWeightBold: '600',
-                      fontWeightNormal: '500',
-                      spacingUnit: '4px',
-                    },
-                  },
-                  clientSecret: paymentData['clientSecret'] as string,
-                }}
-                stripe={stripe}
-              >
-                <div className="flex flex-col gap-8">
-                  <CheckoutForm customerEmail={email} billingAddress={billingAddress} setProcessingPayment={setProcessingPayment} />
-                  <Button variant="ghost" className="self-start" onClick={() => setPaymentData(null)}>
-                    Cancel payment
-                  </Button>
-                </div>
-              </Elements>
-            </div>
-          )}
-        </Suspense>
-      </div>
+                  const price = isVariant
+                    ? getPriceWithCurrencyCode(variant as Variant, currency.code)
+                    : getPriceWithCurrencyCode(product as Product, currency.code)
 
-      {!cartIsEmpty && (
-        <div className="basis-full lg:basis-1/3 lg:pl-8 p-8 border-none bg-primary/5 flex flex-col gap-8 rounded-lg">
-          <h2 className="text-3xl font-medium">Your cart</h2>
-          {cart?.items?.map((item, index) => {
-            if (typeof item.product === 'object' && item.product) {
-              const {
-                product,
-                product: { id, meta, title, gallery },
-                quantity,
-                variant,
-              } = item as {
-                product: Product
-                variant?: Variant
-                quantity?: number
-                [key: string]: unknown
-              }
+                  if (isVariant) {
+                    const imageVariant = product.gallery?.find((item) => {
+                      if (!item.variantOption) return false
+                      const variantOptionID = typeof item.variantOption === 'object' ? item.variantOption.id : item.variantOption
 
-              if (!quantity) return null
+                      const hasMatch = variant?.options?.some((option) => {
+                        if (typeof option === 'object') return option.id === variantOptionID
+                        else return option === variantOptionID
+                      })
 
-              let image = gallery?.[0]?.image || meta?.image
+                      return hasMatch
+                    })
 
-              const isVariant = Boolean(variant) && typeof variant === 'object'
+                    if (imageVariant && typeof imageVariant.image !== 'string') {
+                      image = imageVariant.image
+                    }
+                  }
 
-              const price = isVariant
-                ? getPriceWithCurrencyCode(variant as Variant, currency.code)
-                : getPriceWithCurrencyCode(product as Product, currency.code)
+                  return (
+                    <div className="flex items-start gap-4" key={index}>
+                      <div className="flex items-stretch justify-stretch h-20 w-20 p-1 shadow rounded-lg border">
+                        <div className="relative w-full h-full">
+                          {image && typeof image !== 'string' && <Media className="" fill imgClassName="aspect-square" resource={image} />}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <div className="flex items-center gap-1 text-base">
+                          <p className="font-medium uppercase">{title}</p>
+                          {variant && typeof variant === 'object' && (
+                            <p className="font-mono text-primary/50 tracking-widest">
+                              {variant.options
+                                ?.map((option) => {
+                                  if (typeof option === 'object') return option.label
+                                  return null
+                                })
+                                .join(', ')}
+                            </p>
+                          )}
+                          <div>
+                            {'x'}
+                            {quantity}
+                          </div>
+                        </div>
 
-              if (isVariant) {
-                const imageVariant = product.gallery?.find((item) => {
-                  if (!item.variantOption) return false
-                  const variantOptionID = typeof item.variantOption === 'object' ? item.variantOption.id : item.variantOption
-
-                  const hasMatch = variant?.options?.some((option) => {
-                    if (typeof option === 'object') return option.id === variantOptionID
-                    else return option === variantOptionID
-                  })
-
-                  return hasMatch
-                })
-
-                if (imageVariant && typeof imageVariant.image !== 'string') {
-                  image = imageVariant.image
-                }
-              }
-
-              return (
-                <div className="flex items-start gap-4" key={index}>
-                  <div className="flex items-stretch justify-stretch h-20 w-20 p-2 rounded-lg border">
-                    <div className="relative w-full h-full">
-                      {image && typeof image !== 'string' && <Media className="" fill imgClassName="rounded-lg" resource={image} />}
-                    </div>
-                  </div>
-                  <div className="flex grow justify-between items-center">
-                    <div className="flex flex-col gap-1">
-                      <p className="font-medium text-lg">{title}</p>
-                      {variant && typeof variant === 'object' && (
-                        <p className="text-sm font-mono text-primary/50 tracking-widest">
-                          {variant.options
-                            ?.map((option) => {
-                              if (typeof option === 'object') return option.label
-                              return null
-                            })
-                            .join(', ')}
-                        </p>
-                      )}
-                      <div>
-                        {'x'}
-                        {quantity}
+                        {typeof price === 'number' && <Price amount={price} className="text-sm" />}
                       </div>
                     </div>
-
-                    {typeof price === 'number' && <Price amount={price} />}
-                  </div>
-                </div>
-              )
-            }
-            return null
-          })}
-          <hr />
-          <div className="flex justify-between items-center gap-2">
-            <span className="uppercase">Total</span> <Price className="text-3xl font-medium" amount={cart.subtotal || 0} />
+                  )
+                }
+                return null
+              })}
+            </div>
+            <hr />
+            <div className="flex justify-between items-center gap-2 mt-auto">
+              <span className="uppercase font-mono!">Total</span> <Price className="text-base font-medium" amount={cart.subtotal || 0} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      <Condition predicate={Boolean(policyBlock) && canGoToPayment}>
+        <RenderBlocks blocks={[policyBlock as PolicyBlock]} />
+      </Condition>
     </div>
   )
 }

@@ -5,12 +5,17 @@ import { Fragment } from 'react'
 
 import { CheckoutPage } from '@/components/checkout/CheckoutPage'
 import { getUserServer } from '@/lib/api/user.api'
+import { queryPageBySlug } from '@/lib/api/page.api'
 
 export default async function Checkout() {
   const { user } = await getUserServer()
+  const page = await queryPageBySlug({
+    slug: 'home',
+  })
+  const policyBlock = page?.layout?.find((block) => block.blockType === 'policy')
 
   return (
-    <div className="container min-h-[90vh] flex">
+    <div className="container">
       {!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
         <div>
           <Fragment>
@@ -28,7 +33,7 @@ export default async function Checkout() {
       )}
 
       <h1 className="sr-only">Checkout</h1>
-      <CheckoutPage user={user ?? undefined} />
+      <CheckoutPage user={user ?? undefined} policyBlock={policyBlock} />
     </div>
   )
 }

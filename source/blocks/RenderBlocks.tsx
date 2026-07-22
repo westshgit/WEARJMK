@@ -1,4 +1,5 @@
 import { CarouselBlock } from '@/blocks/Carousel/Component'
+import { PolicyBlock } from '@/blocks/Policy/Component'
 import { ShowCaseBlock } from '@/blocks/ShowCase/Component'
 import { TwoSideWithContentBlock } from '@/blocks/TwoSideWithContent/Component'
 import { toKebabCase } from '@/utilities/toKebabCase'
@@ -9,6 +10,7 @@ import { CallToActionBlock } from './CallToAction/Component'
 
 const blockComponents = {
   carousel: CarouselBlock,
+  policy: PolicyBlock,
   showcase: ShowCaseBlock,
   twoSideWithContent: TwoSideWithContentBlock,
   cta: CallToActionBlock,

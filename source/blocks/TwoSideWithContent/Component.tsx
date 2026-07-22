@@ -36,7 +36,7 @@ export const TwoSideWithContentBlock: React.FC<
           className="h-16 w-full max-w-72 justify-between border-primary/20 px-6 font-mono text-xs uppercase tracking-[0.18em] text-primary/80 hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-primary-foreground md:h-12"
         >
           <Link href="/shop">
-            <span>View Collection</span>
+            <span>View Collection's</span>
             <ArrowRight className="transition-transform group-hover/button:translate-x-1" />
           </Link>
         </Button>

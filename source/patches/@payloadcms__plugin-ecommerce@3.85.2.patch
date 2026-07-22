@@ -1,0 +1,286 @@
+diff --git a/dist/collections/addresses/defaultCountries.js b/dist/collections/addresses/defaultCountries.js
+index 379b414171535a4be12a903c4ad62baae8c761f7..0f4a161f6259a90f9dedb1e1ea25542837b10b50 100644
+--- a/dist/collections/addresses/defaultCountries.js
++++ b/dist/collections/addresses/defaultCountries.js
+@@ -1,169 +1,111 @@
+-/**
+- * Default list of countries supported for forms and payments.
+- * This can be overriden or reused in other parts of the application.
+- *
+- * The label is the human-readable name of the country, and the value is the ISO 3166-1 alpha-2 code.
+- */ export const defaultCountries = [
+-    {
+-        label: 'United States',
+-        value: 'US'
+-    },
+-    {
+-        label: 'United Kingdom',
+-        value: 'GB'
+-    },
+-    {
+-        label: 'Canada',
+-        value: 'CA'
+-    },
+-    {
+-        label: 'Australia',
+-        value: 'AU'
+-    },
+-    {
+-        label: 'Austria',
+-        value: 'AT'
+-    },
+-    {
+-        label: 'Belgium',
+-        value: 'BE'
+-    },
+-    {
+-        label: 'Brazil',
+-        value: 'BR'
+-    },
+-    {
+-        label: 'Bulgaria',
+-        value: 'BG'
+-    },
+-    {
+-        label: 'Cyprus',
+-        value: 'CY'
+-    },
+-    {
+-        label: 'Czech Republic',
+-        value: 'CZ'
+-    },
+-    {
+-        label: 'Denmark',
+-        value: 'DK'
+-    },
+-    {
+-        label: 'Estonia',
+-        value: 'EE'
+-    },
+-    {
+-        label: 'Finland',
+-        value: 'FI'
+-    },
+-    {
+-        label: 'France',
+-        value: 'FR'
+-    },
+-    {
+-        label: 'Germany',
+-        value: 'DE'
+-    },
+-    {
+-        label: 'Greece',
+-        value: 'GR'
+-    },
+-    {
+-        label: 'Hong Kong',
+-        value: 'HK'
+-    },
+-    {
+-        label: 'Hungary',
+-        value: 'HU'
+-    },
+-    {
+-        label: 'India',
+-        value: 'IN'
+-    },
+-    {
+-        label: 'Ireland',
+-        value: 'IE'
+-    },
+-    {
+-        label: 'Italy',
+-        value: 'IT'
+-    },
+-    {
+-        label: 'Japan',
+-        value: 'JP'
+-    },
+-    {
+-        label: 'Latvia',
+-        value: 'LV'
+-    },
+-    {
+-        label: 'Lithuania',
+-        value: 'LT'
+-    },
+-    {
+-        label: 'Luxembourg',
+-        value: 'LU'
+-    },
+-    {
+-        label: 'Malaysia',
+-        value: 'MY'
+-    },
+-    {
+-        label: 'Malta',
+-        value: 'MT'
+-    },
+-    {
+-        label: 'Mexico',
+-        value: 'MX'
+-    },
+-    {
+-        label: 'Netherlands',
+-        value: 'NL'
+-    },
+-    {
+-        label: 'New Zealand',
+-        value: 'NZ'
+-    },
+-    {
+-        label: 'Norway',
+-        value: 'NO'
+-    },
+-    {
+-        label: 'Poland',
+-        value: 'PL'
+-    },
+-    {
+-        label: 'Portugal',
+-        value: 'PT'
+-    },
+-    {
+-        label: 'Romania',
+-        value: 'RO'
+-    },
+-    {
+-        label: 'Singapore',
+-        value: 'SG'
+-    },
+-    {
+-        label: 'Slovakia',
+-        value: 'SK'
+-    },
+-    {
+-        label: 'Slovenia',
+-        value: 'SI'
+-    },
+-    {
+-        label: 'Spain',
+-        value: 'ES'
+-    },
+-    {
+-        label: 'Sweden',
+-        value: 'SE'
+-    },
+-    {
+-        label: 'Switzerland',
+-        value: 'CH'
+-    }
+-];
+-
+-//# sourceMappingURL=defaultCountries.js.map
+\ No newline at end of file
++export const defaultCountries = [
++  { label: 'United States', value: 'US' },
++  { label: 'United Kingdom', value: 'GB' },
++  { label: 'China', value: 'CN' },
++  { label: 'Saudi Arabia', value: 'SA' },
++  { label: 'United Arab Emirates', value: 'AE' },
++  { label: 'Algeria', value: 'DZ' },
++  { label: 'Angola', value: 'AO' },
++  { label: 'Benin', value: 'BJ' },
++  { label: 'Botswana', value: 'BW' },
++  { label: 'Burkina Faso', value: 'BF' },
++  { label: 'Burundi', value: 'BI' },
++  { label: 'Cabo Verde', value: 'CV' },
++  { label: 'Cameroon', value: 'CM' },
++  { label: 'Central African Republic', value: 'CF' },
++  { label: 'Chad', value: 'TD' },
++  { label: 'Comoros', value: 'KM' },
++  { label: 'Congo', value: 'CG' },
++  { label: 'Congo, Democratic Republic of the', value: 'CD' },
++  { label: "Cote d'Ivoire", value: 'CI' },
++  { label: 'Djibouti', value: 'DJ' },
++  { label: 'Egypt', value: 'EG' },
++  { label: 'Equatorial Guinea', value: 'GQ' },
++  { label: 'Eritrea', value: 'ER' },
++  { label: 'Eswatini', value: 'SZ' },
++  { label: 'Ethiopia', value: 'ET' },
++  { label: 'Gabon', value: 'GA' },
++  { label: 'Gambia', value: 'GM' },
++  { label: 'Ghana', value: 'GH' },
++  { label: 'Guinea', value: 'GN' },
++  { label: 'Guinea-Bissau', value: 'GW' },
++  { label: 'Kenya', value: 'KE' },
++  { label: 'Lesotho', value: 'LS' },
++  { label: 'Liberia', value: 'LR' },
++  { label: 'Libya', value: 'LY' },
++  { label: 'Madagascar', value: 'MG' },
++  { label: 'Malawi', value: 'MW' },
++  { label: 'Mali', value: 'ML' },
++  { label: 'Mauritania', value: 'MR' },
++  { label: 'Mauritius', value: 'MU' },
++  { label: 'Morocco', value: 'MA' },
++  { label: 'Mozambique', value: 'MZ' },
++  { label: 'Namibia', value: 'NA' },
++  { label: 'Niger', value: 'NE' },
++  { label: 'Nigeria', value: 'NG' },
++  { label: 'Rwanda', value: 'RW' },
++  { label: 'Sao Tome and Principe', value: 'ST' },
++  { label: 'Senegal', value: 'SN' },
++  { label: 'Seychelles', value: 'SC' },
++  { label: 'Sierra Leone', value: 'SL' },
++  { label: 'Somalia', value: 'SO' },
++  { label: 'South Africa', value: 'ZA' },
++  { label: 'South Sudan', value: 'SS' },
++  { label: 'Sudan', value: 'SD' },
++  { label: 'Tanzania', value: 'TZ' },
++  { label: 'Togo', value: 'TG' },
++  { label: 'Tunisia', value: 'TN' },
++  { label: 'Uganda', value: 'UG' },
++  { label: 'Zambia', value: 'ZM' },
++  { label: 'Zimbabwe', value: 'ZW' },
++  { label: 'Canada', value: 'CA' },
++  { label: 'Mexico', value: 'MX' },
++  { label: 'Guatemala', value: 'GT' },
++  { label: 'Haiti', value: 'HT' },
++  { label: 'Dominican Republic', value: 'DO' },
++  { label: 'Cuba', value: 'CU' },
++  { label: 'Honduras', value: 'HN' },
++  { label: 'Nicaragua', value: 'NI' },
++  { label: 'El Salvador', value: 'SV' },
++  { label: 'Costa Rica', value: 'CR' },
++  { label: 'Brazil', value: 'BR' },
++  { label: 'Argentina', value: 'AR' },
++  { label: 'Colombia', value: 'CO' },
++  { label: 'Chile', value: 'CL' },
++  { label: 'Peru', value: 'PE' },
++  { label: 'Venezuela', value: 'VE' },
++  { label: 'Ecuador', value: 'EC' },
++  { label: 'Bolivia', value: 'BO' },
++  { label: 'Paraguay', value: 'PY' },
++  { label: 'Uruguay', value: 'UY' },
++  { label: 'Germany', value: 'DE' },
++  { label: 'France', value: 'FR' },
++  { label: 'Italy', value: 'IT' },
++  { label: 'Spain', value: 'ES' },
++  { label: 'Netherlands', value: 'NL' },
++  { label: 'Switzerland', value: 'CH' },
++  { label: 'Sweden', value: 'SE' },
++  { label: 'Belgium', value: 'BE' },
++  { label: 'Austria', value: 'AT' },
++  { label: 'Poland', value: 'PL' },
++  { label: 'India', value: 'IN' },
++  { label: 'Japan', value: 'JP' },
++  { label: 'South Korea', value: 'KR' },
++  { label: 'Indonesia', value: 'ID' },
++  { label: 'Turkey', value: 'TR' },
++  { label: 'Israel', value: 'IL' },
++  { label: 'Singapore', value: 'SG' },
++  { label: 'Thailand', value: 'TH' },
++  { label: 'Vietnam', value: 'VN' },
++  { label: 'Philippines', value: 'PH' },
++  { label: 'Australia', value: 'AU' },
++  { label: 'New Zealand', value: 'NZ' },
++  { label: 'Fiji', value: 'FJ' },
++  { label: 'Papua New Guinea', value: 'PG' },
++  { label: 'Solomon Islands', value: 'SB' },
++  { label: 'Vanuatu', value: 'VU' },
++  { label: 'Samoa', value: 'WS' },
++  { label: 'Tonga', value: 'TO' },
++  { label: 'Palau', value: 'PW' },
++  { label: 'Marshall Islands', value: 'MH' },
++]

@@ -4,5 +4,6 @@ export type FieldMetaLike = {
 }
 
 export function fieldIsErrorAfterTouched(meta: FieldMetaLike) {
+  console.log('fieldIsErrorAfterTouched', meta.isTouched, meta.errors)
   return meta.isTouched && meta.errors.length > 0
 }

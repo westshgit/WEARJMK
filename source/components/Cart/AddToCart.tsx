@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import type { Product, Variant } from '@/payload-types'
 
 import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
+import { RiAddBoxFill } from '@remixicon/react'
 import clsx from 'clsx'
 import { useSearchParams } from 'next/navigation'
 import React, { useCallback, useMemo } from 'react'
@@ -97,11 +98,12 @@ export function AddToCart({ product, children, className, variant }: Props) {
     <Button
       aria-label="Add to cart"
       variant={variant ?? 'outline'}
-      className={clsx('hover:opacity-90', className)}
+      className={clsx('hover:opacity-90 uppercase', className)}
       disabled={disabled || isLoading}
       onClick={addToCart}
       type="submit"
     >
+      <RiAddBoxFill />
       {children ?? 'Add To Cart'}
     </Button>
   )

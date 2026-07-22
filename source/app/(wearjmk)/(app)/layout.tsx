@@ -2,6 +2,8 @@ import { AdminBar } from '@/components/AdminBar'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
+import { PageTransition } from '@/components/layout/PageTransition'
+import { paystackAdapterClient } from '@/lib/api/payment/paystack'
 import { EcommerceProvider } from '@payloadcms/plugin-ecommerce/client/react'
 import { stripeAdapterClient } from '@payloadcms/plugin-ecommerce/payments/stripe'
 import { ReactNode } from 'react'
@@ -36,12 +38,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         stripeAdapterClient({
           publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
         }),
+        paystackAdapterClient({
+          label: 'paystack',
+        }),
       ]}
     >
       <AdminBar />
       <LivePreviewListener />
       <Header />
-      <main>{children}</main>
+      <PageTransition>{children}</PageTransition>
       <Footer />
     </EcommerceProvider>
   )

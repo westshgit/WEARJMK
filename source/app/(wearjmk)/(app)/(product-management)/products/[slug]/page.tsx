@@ -5,16 +5,14 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React, { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
-import { ChevronLeftIcon, PlusIcon, ShoppingCartIcon } from 'lucide-react'
+import { ChevronLeftIcon } from 'lucide-react'
 import { Metadata } from 'next'
 import { CarouselClient } from '@/blocks/Carousel/Component.client'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { RiMoreFill } from '@remixicon/react'
-import { AddToCart } from '@/components/Cart/AddToCart'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import Condition from '@/components/Condition'
 import { queryProductBySlug } from '@/lib/api'
+import ProductSheet from '@/components/product/ProductSheet'
 
 type Args = {
   params: Promise<{
@@ -137,36 +135,7 @@ export default async function ProductPage({ params }: Args) {
             </div>
 
             <div className="md:hidden fixed bottom-0 left-0 right-0 z-10 bg-background shadow-lg">
-              <Sheet modal={false}>
-                <SheetTrigger asChild>
-                  <div className="flex items-center justify-between w-full gap-2 px-4 pt-2 shadow-2xl pb-6">
-                    <div className="space-y-3">
-                      <p className="text-xs text-muted-foreground">Viewing:</p>
-                      <div className="flex items-center gap-2">
-                        <h6 className="font-mono uppercase text-base">{product.title}</h6>
-                        <Suspense fallback={null}>
-                          <AddToCart product={product}>
-                            <span className="relative inline-flex">
-                              <ShoppingCartIcon className="size-5" />
-                              <PlusIcon className="absolute -top-1.5 -right-1.5 size-3 rounded-full bg-primary text-primary-foreground p-0.5" strokeWidth={3} />
-                            </span>
-                          </AddToCart>
-                        </Suspense>
-                      </div>
-                    </div>
-
-                    <Button className="" variant={'outline'} type="button" size={'xs'}>
-                      More <RiMoreFill />
-                    </Button>
-                  </div>
-                </SheetTrigger>
-
-                <SheetContent side="bottom" overlay={false} className="h-[50dvh] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden p-4 rounded-t-xl">
-                  <div className="flex-1 max-h-[50dvh] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
-                    <ProductDescription product={product} />
-                  </div>
-                </SheetContent>
-              </Sheet>
+              <ProductSheet product={product} price={price ?? 0} />
             </div>
           </div>
         </div>

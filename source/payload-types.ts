@@ -554,10 +554,14 @@ export interface Transaction {
         id?: string | null;
       }[]
     | null;
-  paymentMethod?: 'stripe' | null;
+  paymentMethod?: ('stripe' | 'paystack') | null;
   stripe?: {
     customerID?: string | null;
     paymentIntentID?: string | null;
+  };
+  paystack?: {
+    reference: string;
+    accessCode?: string | null;
   };
   billingAddress?: {
     title?: string | null;
@@ -736,44 +740,113 @@ export interface Address {
   country:
     | 'US'
     | 'GB'
+    | 'CN'
+    | 'SA'
+    | 'AE'
+    | 'DZ'
+    | 'AO'
+    | 'BJ'
+    | 'BW'
+    | 'BF'
+    | 'BI'
+    | 'CV'
+    | 'CM'
+    | 'CF'
+    | 'TD'
+    | 'KM'
+    | 'CG'
+    | 'CD'
+    | 'CI'
+    | 'DJ'
+    | 'EG'
+    | 'GQ'
+    | 'ER'
+    | 'SZ'
+    | 'ET'
+    | 'GA'
+    | 'GM'
+    | 'GH'
+    | 'GN'
+    | 'GW'
+    | 'KE'
+    | 'LS'
+    | 'LR'
+    | 'LY'
+    | 'MG'
+    | 'MW'
+    | 'ML'
+    | 'MR'
+    | 'MU'
+    | 'MA'
+    | 'MZ'
+    | 'NA'
+    | 'NE'
+    | 'NG'
+    | 'RW'
+    | 'ST'
+    | 'SN'
+    | 'SC'
+    | 'SL'
+    | 'SO'
+    | 'ZA'
+    | 'SS'
+    | 'SD'
+    | 'TZ'
+    | 'TG'
+    | 'TN'
+    | 'UG'
+    | 'ZM'
+    | 'ZW'
     | 'CA'
-    | 'AU'
-    | 'AT'
-    | 'BE'
-    | 'BR'
-    | 'BG'
-    | 'CY'
-    | 'CZ'
-    | 'DK'
-    | 'EE'
-    | 'FI'
-    | 'FR'
-    | 'DE'
-    | 'GR'
-    | 'HK'
-    | 'HU'
-    | 'IN'
-    | 'IE'
-    | 'IT'
-    | 'JP'
-    | 'LV'
-    | 'LT'
-    | 'LU'
-    | 'MY'
-    | 'MT'
     | 'MX'
-    | 'NL'
-    | 'NZ'
-    | 'NO'
-    | 'PL'
-    | 'PT'
-    | 'RO'
-    | 'SG'
-    | 'SK'
-    | 'SI'
+    | 'GT'
+    | 'HT'
+    | 'DO'
+    | 'CU'
+    | 'HN'
+    | 'NI'
+    | 'SV'
+    | 'CR'
+    | 'BR'
+    | 'AR'
+    | 'CO'
+    | 'CL'
+    | 'PE'
+    | 'VE'
+    | 'EC'
+    | 'BO'
+    | 'PY'
+    | 'UY'
+    | 'DE'
+    | 'FR'
+    | 'IT'
     | 'ES'
+    | 'NL'
+    | 'CH'
     | 'SE'
-    | 'CH';
+    | 'BE'
+    | 'AT'
+    | 'PL'
+    | 'IN'
+    | 'JP'
+    | 'KR'
+    | 'ID'
+    | 'TR'
+    | 'IL'
+    | 'SG'
+    | 'TH'
+    | 'VN'
+    | 'PH'
+    | 'AU'
+    | 'NZ'
+    | 'FJ'
+    | 'PG'
+    | 'SB'
+    | 'VU'
+    | 'WS'
+    | 'TO'
+    | 'PW'
+    | 'MH';
   phone?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -786,7 +859,7 @@ export interface Page {
   id: number;
   title: string;
   publishedOn?: string | null;
-  layout: (CallToActionBlock | CarouselBlock | ShowCase | TwoSideWithContent)[];
+  layout: (CallToActionBlock | CarouselBlock | PolicyBlock | ShowCase | TwoSideWithContent)[];
   meta?: {
     title?: string | null;
     /**
@@ -873,6 +946,37 @@ export interface CarouselBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'carousel';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PolicyBlock".
+ */
+export interface PolicyBlock {
+  policyTitle: string;
+  policyDescription?: string | null;
+  policies: {
+    icon?:
+      | (
+          | 'RotateCcw'
+          | 'ShieldCheck'
+          | 'Truck'
+          | 'RefreshCw'
+          | 'Clock'
+          | 'Package'
+          | 'CreditCard'
+          | 'MessageCircle'
+          | 'Info'
+          | 'CheckCircle'
+          | 'AlertCircle'
+        )
+      | null;
+    title: string;
+    description: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'policy';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1294,6 +1398,7 @@ export interface PagesSelect<T extends boolean = true> {
     | {
         cta?: T | CallToActionBlockSelect<T>;
         carousel?: T | CarouselBlockSelect<T>;
+        policy?: T | PolicyBlockSelect<T>;
         showcase?: T | ShowCaseSelect<T>;
         twoSideWithContent?: T | TwoSideWithContentSelect<T>;
       };
@@ -1359,6 +1464,24 @@ export interface CarouselBlockSelect<T extends boolean = true> {
   selectedDocs?: T;
   populatedDocs?: T;
   populatedDocsTotal?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "PolicyBlock_select".
+ */
+export interface PolicyBlockSelect<T extends boolean = true> {
+  policyTitle?: T;
+  policyDescription?: T;
+  policies?:
+    | T
+    | {
+        icon?: T;
+        title?: T;
+        description?: T;
+        id?: T;
+      };
   id?: T;
   blockName?: T;
 }
@@ -1772,6 +1895,12 @@ export interface TransactionsSelect<T extends boolean = true> {
     | {
         customerID?: T;
         paymentIntentID?: T;
+      };
+  paystack?:
+    | T
+    | {
+        reference?: T;
+        accessCode?: T;
       };
   billingAddress?:
     | T
