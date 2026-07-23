@@ -49,6 +49,9 @@ importers:
       '@payloadcms/ui':
         specifier: 3.85.2
         version: 3.85.2(@types/react@19.2.14)(monaco-editor@0.55.1)(next@16.2.6(@babel/core@7.29.7)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4))(payload@3.85.2(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@6.0.3)
+      '@paystack/paystack-sdk':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@radix-ui/react-accordion':
         specifier: 1.2.11
         version: 1.2.11(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -1710,6 +1713,9 @@ packages:
       payload: 3.85.2
       react: ^19.0.1 || ^19.1.2 || ^19.2.1
       react-dom: ^19.0.1 || ^19.1.2 || ^19.2.1
+
+  '@paystack/paystack-sdk@1.0.1':
+    resolution: {integrity: sha512-IZT3KI8O6yX+ZFLK2WYq/IjhYduxCWkqh0HesJcSD1TUcHYyoi8iREiM02Qg+nnVCiPaTKdAw7Ogfeg9eVp9wA==}
 
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
@@ -8206,6 +8212,8 @@ snapshots:
       - monaco-editor
       - supports-color
       - typescript
+
+  '@paystack/paystack-sdk@1.0.1': {}
 
   '@pinojs/redact@0.4.0': {}
 
