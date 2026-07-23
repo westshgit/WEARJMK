@@ -14,6 +14,8 @@ import Condition from '@/components/Condition'
 import { queryProductBySlug } from '@/lib/api'
 import ProductSheet from '@/components/product/ProductSheet'
 
+export const dynamic = 'force-dynamic'
+
 type Args = {
   params: Promise<{
     slug: string

@@ -1,4 +1,4 @@
-import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
+import type { PaymentAdapter } from '@/patches/dist/types'
 
 import { DEFAULT_PAYSTACK_API_BASE } from './types'
 import type { PaystackResponse, PaystackTransactionData } from './types'
@@ -68,7 +68,7 @@ export const confirmOrder =
     try {
       // ---- Find our transaction by reference (was stripe.paymentIntentID) --
       const transactionsResults = await payload.find({
-        collection: transactionsSlug,
+        collection: (transactionsSlug as 'transactions') || 'transactions',
         req,
         where: {
           'paystack.reference': { equals: reference },
@@ -83,7 +83,7 @@ export const confirmOrder =
       // it instead of creating a duplicate. The redirect + webhook race can
       // otherwise double-charge the order.
       const existingOrder = await payload.find({
-        collection: ordersSlug,
+        collection: ordersSlug as 'orders',
         limit: 1,
         req,
         where: {
@@ -96,9 +96,7 @@ export const confirmOrder =
           message: 'Order already confirmed',
           orderID: existing.id,
           transactionID: transaction.id,
-          ...('accessToken' in existing && existing.accessToken
-            ? { accessToken: existing.accessToken as string }
-            : {}),
+          ...('accessToken' in existing && existing.accessToken ? { accessToken: existing.accessToken as string } : {}),
         }
       }
 
@@ -131,10 +129,10 @@ export const confirmOrder =
 
       // ---- Create the order (identical to Stripe) -------------------------
       const order = await payload.create({
-        collection: ordersSlug,
+        collection: ordersSlug as 'orders',
         data: {
           amount,
-          currency,
+          currency: (currency?.toUpperCase() as 'NGN') || 'NGN',
           ...(req.user ? { customer: req.user.id } : customerEmail ? { customerEmail } : {}),
           items: cartItemsSnapshot,
           shippingAddress: shippingAddress ?? undefined,
@@ -147,13 +145,13 @@ export const confirmOrder =
       const timestamp = new Date().toISOString()
       await payload.update({
         id: cartID,
-        collection: cartsSlug,
+        collection: cartsSlug as 'carts',
         data: { purchasedAt: timestamp },
         req,
       })
       await payload.update({
         id: transaction.id,
-        collection: transactionsSlug,
+        collection: transactionsSlug as 'transactions',
         data: { order: order.id, status: 'succeeded' },
         req,
       })
@@ -162,17 +160,13 @@ export const confirmOrder =
         message: 'Payment confirmed successfully',
         orderID: order.id,
         transactionID: transaction.id,
-        ...('accessToken' in order && order.accessToken
-          ? { accessToken: order.accessToken as string }
-          : {}),
+        ...('accessToken' in order && order.accessToken ? { accessToken: order.accessToken as string } : {}),
       }
     } catch (error) {
       payload.logger.error({
         err: error,
         msg: 'Error confirming order with Paystack',
       })
-      throw new Error(
-        error instanceof Error ? error.message : 'Unknown error confirming payment',
-      )
+      throw new Error(error instanceof Error ? error.message : 'Unknown error confirming payment')
     }
   }

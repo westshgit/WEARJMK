@@ -1,5 +1,5 @@
 import type { GroupField, PayloadRequest } from 'payload'
-import type { PaymentAdapterArgs } from '@payloadcms/plugin-ecommerce/types'
+import type { PaymentAdapterArgs } from '@/patches/dist/types'
 
 /**
  * Paystack API base URLs. The live API is used by default; point `apiBase` at a
@@ -15,10 +15,7 @@ export const DEFAULT_PAYSTACK_API_BASE = 'https://api.paystack.co'
  *
  * @see https://paystack.com/docs/payments/webhooks/
  */
-export type PaystackWebhookHandler = (args: {
-  event: PaystackWebhookEvent
-  req: PayloadRequest
-}) => Promise<void> | void
+export type PaystackWebhookHandler = (args: { event: PaystackWebhookEvent; req: PayloadRequest }) => Promise<void> | void
 
 /**
  * Map of Paystack event names to handlers. Keys are event types such as

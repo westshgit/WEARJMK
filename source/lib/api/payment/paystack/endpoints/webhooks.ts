@@ -19,11 +19,7 @@ type Props = {
  *
  * @see https://paystack.com/docs/payments/webhooks/
  */
-const isAuthenticPaystackRequest = (
-  rawBody: string,
-  signatureHeader: string | null,
-  secretKey: string,
-): boolean => {
+const isAuthenticPaystackRequest = (rawBody: string, signatureHeader: string | null, secretKey: string): boolean => {
   if (!signatureHeader) return false
 
   const digest = crypto.createHmac('sha512', secretKey).update(rawBody).digest('hex')

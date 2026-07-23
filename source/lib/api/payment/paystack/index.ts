@@ -1,4 +1,4 @@
-import type { PaymentAdapter, PaymentAdapterClient } from '@payloadcms/plugin-ecommerce/types'
+import type { PaymentAdapter, PaymentAdapterClient } from '@/patches/dist/types'
 import type { GroupField } from 'payload'
 
 import { confirmOrder } from './confirmOrder'
@@ -37,10 +37,7 @@ const buildPaystackGroup = (args: PaystackAdapterArgs): GroupField => {
       condition: (data) => data?.paymentMethod === 'paystack',
       ...groupOverrides?.admin,
     },
-    fields:
-      groupOverrides?.fields && typeof groupOverrides.fields === 'function'
-        ? groupOverrides.fields({ defaultFields: [...baseFields] })
-        : [...baseFields],
+    fields: groupOverrides?.fields && typeof groupOverrides.fields === 'function' ? groupOverrides.fields({ defaultFields: [...baseFields] }) : [...baseFields],
   }
 
   return groupField
@@ -98,9 +95,7 @@ export const paystackAdapter = (args: PaystackAdapterArgs): PaymentAdapter => {
  * Paystack method supports both `initiatePayment` and `confirmOrder`, and what
  * label to render in the payment-method picker.
  */
-export const paystackAdapterClient = (args: {
-  label?: string
-}): PaymentAdapterClient => ({
+export const paystackAdapterClient = (args: { label?: string }): PaymentAdapterClient => ({
   name: 'paystack',
   label: args?.label || 'Paystack',
   confirmOrder: true,

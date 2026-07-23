@@ -106,19 +106,5 @@
   },
   "engines": {
     "node": "^18.20.2 || >=20.9.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp"
-    ],
-    "ignoredBuiltDependencies": [
-      "@vercel/git-hooks",
-      "esbuild",
-      "sharp",
-      "unrs-resolver"
-    ],
-    "patchedDependencies": {
-      "@payloadcms/plugin-ecommerce@3.85.2": "patches/@payloadcms__plugin-ecommerce@3.85.2.patch"
-    }
   }
 }
