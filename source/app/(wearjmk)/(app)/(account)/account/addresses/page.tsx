@@ -15,7 +15,7 @@ export default async function AddressesPage() {
 
   return (
     <div className="border p-8 rounded-lg bg-primary-foreground">
-      <h1 className="text-3xl font-medium mb-8">Addresses</h1>
+      <h1 className="text-3xl font-medium mb-8 uppercase">Addresses</h1>
       <div className="mb-8">
         <Suspense fallback={<p>Loading addresses...</p>}>
           <AddressListing />

@@ -21,12 +21,12 @@ export default async function AccountPage() {
   return (
     <>
       <div className="border p-8 rounded-lg bg-primary-foreground">
-        <h1 className="text-3xl font-medium mb-8">Account settings</h1>
+        <h1 className="text-3xl font-medium mb-8 uppercase">Account settings</h1>
         <AccountForm user={user} />
       </div>
 
       <div className=" border p-8 rounded-lg bg-primary-foreground">
-        <h2 className="text-3xl font-medium mb-8">Recent Orders</h2>
+        <h2 className="text-3xl font-medium mb-8 uppercase">Recent Orders</h2>
 
         <div className="prose dark:prose-invert mb-8">
           <p>

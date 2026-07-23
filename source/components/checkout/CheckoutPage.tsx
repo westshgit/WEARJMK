@@ -9,10 +9,8 @@ import { Elements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-
 import { AnimatePresence, motion } from 'motion/react'
 import React, { Suspense, useCallback, useEffect, useState } from 'react'
-
 import { cssVariables } from '@/cssVariables'
 import { CheckoutForm } from '@/components/forms/CheckoutForm'
 import { useAddresses, useCart, useCurrency, usePayments } from '@payloadcms/plugin-ecommerce/client/react'
@@ -26,7 +24,7 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { ArrowRight, CreditCard, LogIn, Mail, Store, UserPlus } from 'lucide-react'
 import { RiHandbagLine } from '@remixicon/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import Condition from '../Condition'
+import Condition from '@/components/Condition'
 import { Wizard } from 'react-use-wizard'
 import { AnimatedWizardWrapper, GuestAddressStep, GuestContactStep, GuestReviewStep } from './Step'
 import { RenderBlocks } from '@/blocks/RenderBlocks'
@@ -52,7 +50,7 @@ export const CheckoutPage: React.FC<{ user?: User; policyBlock: PolicyBlock | un
   const [email, setEmail] = useState('')
   const [emailEditable, setEmailEditable] = useState(true)
   const [paymentData, setPaymentData] = useState<null | Record<string, unknown>>(null)
-  const { initiatePayment, paymentMethods } = usePayments()
+  const { initiatePayment } = usePayments()
   const { addresses } = useAddresses()
   const [shippingAddress, setShippingAddress] = useState<Partial<Address>>()
   const [billingAddress, setBillingAddress] = useState<Partial<Address>>()

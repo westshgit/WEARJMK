@@ -211,7 +211,7 @@ export const AccountForm: React.FC<{ user: User }> = ({ user }) => {
 
       <form.Subscribe selector={(state) => ({ isSubmitting: state.isSubmitting, canSubmit: state.canSubmit })}>
         {({ isSubmitting, canSubmit }) => (
-          <Button className="mt-8" disabled={isSubmitting || isPending || !canSubmit} type="submit">
+          <Button className="mt-8 uppercase" disabled={isSubmitting || isPending || !canSubmit} type="submit">
             {isSubmitting ? 'Processing' : 'Update Account'}
           </Button>
         )}

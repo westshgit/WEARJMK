@@ -35,42 +35,6 @@ const paystackClient = (secretKey: string, apiBase: string) => {
 }
 
 /**
- * Flatten cart items into the lightweight shape stored on the transaction, the
- * Paystack metadata snapshot and eventually the order. Mirrors the Stripe
- * adapter exactly so orders look identical regardless of provider.
- *
- * Custom properties added via `cartItemMatcher` (e.g. delivery options) are
- * preserved.
- */
-const flattenCartItems: NonNullable<PaymentAdapter>['initiatePayment'] extends (
-  args: infer Args,
-) => unknown
-  ? (cart: Args['data']['cart']) => Array<Record<string, unknown>>
-  : never = (cart) => {
-  return cart.items.map((item) => {
-    const productID = typeof item.product === 'object' ? item.product.id : item.product
-    const variantID = item.variant
-      ? typeof item.variant === 'object'
-        ? item.variant.id
-        : item.variant
-      : undefined
-
-    // Strip the populated relationship objects, keep the rest.
-    const { product: _product, variant: _variant, ...customProperties } = item as Record<
-      string,
-      unknown
-    >
-
-    return {
-      ...customProperties,
-      product: productID,
-      quantity: item.quantity,
-      ...(variantID ? { variant: variantID } : {}),
-    }
-  })
-}
-
-/**
  * Generate a unique Paystack transaction reference. Paystack requires the
  * merchant to supply the reference (Stripe auto-generates the PaymentIntent
  * id). We combine the cart id and a timestamp to keep it collision resistant
@@ -116,8 +80,8 @@ export const initiatePayment =
     if (!secretKey) {
       throw new Error('Paystack secret key is required.')
     }
-    if (!currency) {
-      throw new Error('Currency is required.')
+    if (!currency || currency.toUpperCase() !== 'NGN') {
+      throw new Error('Currency is required and must be NGN.')
     }
     if (!cart || !cart.items || cart.items.length === 0) {
       throw new Error('Cart is empty or not provided.')
@@ -129,20 +93,32 @@ export const initiatePayment =
       throw new Error('A valid amount is required to initiate a payment.')
     }
 
-    const flattenedCart = flattenCartItems(cart)
+    const flattenedCart = cart.items.map((item) => {
+      const productID = typeof item.product === 'object' ? item.product.id : item.product
+      const variantID = item.variant ? (typeof item.variant === 'object' ? item.variant.id : item.variant) : undefined
+      // Preserve any additional custom properties (e.g., deliveryOption, customizations)
+      // that may have been added via cartItemMatcher
+      const { product: _product, variant: _variant, ...customProperties } = item
+      return {
+        ...customProperties,
+        product: productID,
+        quantity: item.quantity,
+        ...(variantID
+          ? {
+              variant: variantID,
+            }
+          : {}),
+      }
+    })
     const reference = generateReference(String(cart.id))
 
     // Resolve the callback URL the shopper is redirected to after paying.
-    const serverURL =
-      process.env.NEXT_PUBLIC_SERVER_URL ||
-      (typeof req.headers?.get === 'function'
-        ? req.headers.get('origin') || ''
-        : '')
+    const serverURL = process.env.NEXT_PUBLIC_SERVER_URL || (typeof req.headers?.get === 'function' ? req.headers.get('origin') || '' : '')
 
     const paystack = paystackClient(secretKey, apiBase)
 
     try {
-      // ---- CHANGED: Initialize Transaction instead of PaymentIntent --------
+      // ---- Initialize Transaction instead of PaymentIntent -----------------
       const initialized = await paystack.initialize({
         email: customerEmail,
         amount, // kobo
@@ -156,21 +132,26 @@ export const initiatePayment =
           cart_id: String(cart.id),
           cart_items_snapshot: JSON.stringify(flattenedCart),
           shipping_address: JSON.stringify(shippingAddressFromData ?? null),
-          custom_fields: [
-            { display_name: 'Cart ID', variable_name: 'cart_id', value: String(cart.id) },
-          ],
+          custom_fields: [{ display_name: 'Cart ID', variable_name: 'cart_id', value: String(cart.id) }],
         },
       })
 
-      // ---- Create a transaction record (same shape as Stripe, NGN fields) -
+      // ---- Create a transaction record (same shape as Stripe, NGN fields) --
+      // NOTE: `req` must be passed here — without it this create() runs
+      // outside the request's DB session/transaction. beforeChange/afterChange
+      // hooks on the transactions collection get an empty req, and on
+      // transactional adapters (e.g. Postgres) the create can outright throw
+      // if a transaction is already open on req. This was the source of the
+      // "errored when creating transaction" failure. See payloadcms/payload#15836.
       const transaction = await payload.create({
+        // @ts-expect-error `transactionsSlug` is a string, but Payload's `create()` expects a `CollectionConfig['slug']` type. This is a known issue with Payload's TypeScript types.
         collection: transactionsSlug,
         data: {
           ...(req.user ? { customer: req.user.id } : { customerEmail }),
           amount,
           billingAddress: billingAddressFromData,
           cart: cart.id,
-          currency: currency.toUpperCase(),
+          currency: currency.toUpperCase() as 'NGN',
           items: flattenedCart,
           paymentMethod: 'paystack',
           status: 'pending',
@@ -182,7 +163,7 @@ export const initiatePayment =
         req,
       })
 
-      // ---- CHANGED return: authorizationUrl + reference (no clientSecret) -
+      // ---- Return: authorizationUrl + reference (no clientSecret) ----------
       return {
         message: 'Payment initiated successfully',
         reference: initialized.reference,
@@ -195,8 +176,6 @@ export const initiatePayment =
         err: error,
         msg: 'Error initiating payment with Paystack',
       })
-      throw new Error(
-        error instanceof Error ? error.message : 'Unknown error initiating payment',
-      )
+      throw new Error(error instanceof Error ? error.message : 'Unknown error initiating payment')
     }
   }
