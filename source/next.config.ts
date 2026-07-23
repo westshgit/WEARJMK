@@ -27,7 +27,6 @@ if (DEV) {
 
 const serverURLs = [NEXT_PUBLIC_SERVER_URL, 'http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.0.15:3000'].filter(Boolean)
 const nextConfig: NextConfig = {
-  output: 'standalone',
   // See: https://github.com/vercel/next.js/issues/86431
   sassOptions: {
     loadPaths: ['./node_modules/@payloadcms/ui/dist/scss/'],
