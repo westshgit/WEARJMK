@@ -5,9 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@payloadcms/plugin-ecommerce@3.85.2':
-    hash: 69d0d20a59526ccbb9849148a08997397b1823936d4e93e19ad8e088e326da0f
-    path: patches/@payloadcms__plugin-ecommerce@3.85.2.patch
+  '@payloadcms/plugin-ecommerce@3.85.2': 69d0d20a59526ccbb9849148a08997397b1823936d4e93e19ad8e088e326da0f
 
 importers:
 
