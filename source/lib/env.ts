@@ -16,9 +16,9 @@ const schema = z.object({
   PAYLOAD_SECRET: z.string().min(1),
   DATABASE_URL: z.string().min(1),
   COMPANY_NAME: z.string().min(1),
-  TWITTER_CREATOR: z.string().min(1),
-  TWITTER_SITE: z.string().url(),
-  PAYLOAD_PUBLIC_SERVER_URL: z.string().url(),
+  TWITTER_CREATOR: z.string().min(1).optional(),
+  TWITTER_SITE: z.url().optional(),
+  PAYLOAD_PUBLIC_SERVER_URL: z.url(),
   PREVIEW_SECRET: z.string().min(1),
   STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
   STRIPE_WEBHOOKS_SIGNING_SECRET: z.string().startsWith('whsec_'),
@@ -37,7 +37,7 @@ const schema = z.object({
 
 const _Env = schema.safeParse(process.env)
 
-if (!_Env.success) {
+if (!_Env.success && (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development')) {
   throw new Error(`Invalid environment variables: ${JSON.stringify(_Env.error.format(), null, 2)}`)
 }
 
