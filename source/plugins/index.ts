@@ -5,8 +5,6 @@ import type { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import type { Field, Plugin } from 'payload'
 
-import { paystackAdapter } from '@/lib/api/payment/paystack'
-
 import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
 import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
@@ -16,7 +14,7 @@ import { ProductsCollection } from '@/collections/Products'
 import { defaultCountries } from '@/lib/defaultCountries'
 import type { Page, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
-import { stripeAdapter } from '@/patches/dist/payments/adapters/stripe'
+import { paystackAdapter } from '@/lib/api/payment/paystack/paystackAdapter'
 
 const generateTitle: GenerateTitle<Product | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | WearJMK Website` : 'WearJMK Website'
@@ -141,24 +139,7 @@ export const plugins: Plugin[] = [
       },
     },
     payments: {
-      paymentMethods: [
-        stripeAdapter({
-          secretKey: process.env.STRIPE_SECRET_KEY!,
-          publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-          webhookSecret: process.env.STRIPE_WEBHOOKS_SIGNING_SECRET!,
-        }),
-        paystackAdapter({
-          secretKey: process.env.PAYSTACK_SECRET_KEY!,
-          webhooks: {
-            // Source of truth for a successful charge — process fulfillment
-            // asynchronously from here. The webhook URL registered in the
-            // Paystack dashboard must point at /api/payments/paystack/webhooks.
-            'charge.success': async ({ event, req }) => {
-              req.payload.logger.info(`Paystack charge.success received for reference: ${event.data?.reference}`)
-            },
-          },
-        }),
-      ],
+      paymentMethods: [paystackAdapter],
     },
     products: {
       productsCollectionOverride: ProductsCollection,

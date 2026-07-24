@@ -2,6 +2,7 @@ import type { PaymentAdapter } from '@/patches/dist/types'
 
 import { DEFAULT_PAYSTACK_API_BASE } from './types'
 import type { PaystackInitializeData, PaystackResponse } from './types'
+import { Transaction } from 'payload'
 
 type Props = {
   secretKey: string
@@ -64,7 +65,7 @@ const generateReference = (cartID: string): string => {
  */
 export const initiatePayment =
   (props: Props): NonNullable<PaymentAdapter>['initiatePayment'] =>
-  async ({ data, req, transactionsSlug }) => {
+  async ({ data, req, transactionsSlug }: Parameters<NonNullable<PaymentAdapter>['initiatePayment']>[0] & { transaction?: Transaction }) => {
     const payload = req.payload
     const { secretKey } = props
     const apiBase = props.apiBase || DEFAULT_PAYSTACK_API_BASE
@@ -130,8 +131,6 @@ export const initiatePayment =
           // Paystack metadata is a free-form object — we mirror the Stripe
           // snapshot so confirmOrder / the webhook can rebuild the order.
           cart_id: String(cart.id),
-          cart_items_snapshot: JSON.stringify(flattenedCart),
-          shipping_address: JSON.stringify(shippingAddressFromData ?? null),
           custom_fields: [{ display_name: 'Cart ID', variable_name: 'cart_id', value: String(cart.id) }],
         },
       })

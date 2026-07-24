@@ -554,11 +554,7 @@ export interface Transaction {
         id?: string | null;
       }[]
     | null;
-  paymentMethod?: ('stripe' | 'paystack') | null;
-  stripe?: {
-    customerID?: string | null;
-    paymentIntentID?: string | null;
-  };
+  paymentMethod?: 'paystack' | null;
   paystack?: {
     reference: string;
     accessCode?: string | null;
@@ -1890,12 +1886,6 @@ export interface TransactionsSelect<T extends boolean = true> {
         id?: T;
       };
   paymentMethod?: T;
-  stripe?:
-    | T
-    | {
-        customerID?: T;
-        paymentIntentID?: T;
-      };
   paystack?:
     | T
     | {
