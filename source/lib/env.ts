@@ -9,6 +9,8 @@ import dotenv from 'dotenv'
 // variables that are already set, so this is a no-op inside Next.js.
 let envPath = path.resolve(process.cwd(), '.env')
 
+// This is a fallback for scripts that are run from a subdirectory (e.g. scripts/).
+// we must be careful while using this workaround
 if (!existsSync(envPath)) {
   // Script may be run from a subdirectory (e.g. scripts/), so go up one level
   envPath = path.resolve(process.cwd(), '..', '.env')
