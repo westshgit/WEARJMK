@@ -17,7 +17,7 @@ export async function syntheticServerRequest() {
   const headersList = await nextHeaders()
   // synthetic Request — createPayloadRequest only reads headers/URL off it,
   // there's no real network request happening in a server action
-  const request = new Request(Env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000', {
+  const request = new Request(Env?.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3000', {
     headers: headersList,
   })
   return await createPayloadRequest({ config, request })
