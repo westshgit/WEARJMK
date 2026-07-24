@@ -1,4 +1,4 @@
-import type { PaymentAdapter } from '@/patches/dist/types'
+import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 
 import { DEFAULT_PAYSTACK_API_BASE } from './types'
 import type { PaystackInitializeData, PaystackResponse } from './types'

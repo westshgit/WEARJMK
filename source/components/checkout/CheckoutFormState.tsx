@@ -1,9 +1,9 @@
 // Thin shape TanStack Form actually needs to manage state for.
 
 import { initializePayment, InitializePaymentArgs } from '@/lib/api/payment.api'
-import { useAddresses, useCurrency } from '@/patches/dist/exports/client/react'
 import { Address, Cart, User } from '@/payload-types'
 import { applyServerFieldErrors, useServerActionWithState } from '@/utilities/useServerActionWithState'
+import { useAddresses } from '@payloadcms/plugin-ecommerce/client/react'
 import { toast } from '@payloadcms/ui'
 import { useForm, useSelector } from '@tanstack/react-form'
 

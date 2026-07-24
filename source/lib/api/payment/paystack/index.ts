@@ -1,10 +1,11 @@
-import type { PaymentAdapter, PaymentAdapterClient } from '@/patches/dist/types'
+
 import type { GroupField } from 'payload'
 
 import { confirmOrder } from './confirmOrder'
 import { initiatePayment } from './initiatePayment'
 import { webhooksEndpoint } from './endpoints/webhooks'
 import type { PaystackAdapterArgs } from './types'
+import { PaymentAdapter, PaymentAdapterClient } from '@payloadcms/plugin-ecommerce/types'
 
 /**
  * Fields stored on the transactions collection for the Paystack payment

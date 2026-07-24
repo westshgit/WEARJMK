@@ -8,7 +8,6 @@ import { useForm, revalidateLogic } from '@tanstack/react-form'
 import { FormFieldError } from '@/components/forms/FormError'
 import { FormItem } from '@/components/forms/FormItem'
 import { Button } from '@/components/ui/button'
-import { defaultCountries } from '@/lib/defaultCountries'
 import { deepMergeSimple } from 'payload/shared'
 import { titles } from './constants'
 import { addressSchema, validatePhone, validatePostalCode } from '@/lib/schema/address'
@@ -17,6 +16,8 @@ import { fieldIsErrorAfterTouched } from '@/components/forms/shared.api'
 import { useWizard, Wizard } from 'react-use-wizard'
 import Condition from '@/components/Condition'
 import { RiEdit2Fill } from '@remixicon/react'
+import { defaultCountries as supportedCountries } from '@payloadcms/plugin-ecommerce/client/react'
+
 
 type Props = {
   addressID?: Config['db']['defaultIDType']
@@ -383,7 +384,7 @@ export const AddressForm: React.FC<Props> = ({ addressID, initialData, callback,
                       <SelectValue placeholder="Country" />
                     </SelectTrigger>
                     <SelectContent>
-                      {defaultCountries.map((country) => {
+                      {supportedCountries.map((country) => {
                         const value = typeof country === 'string' ? country : country.value
                         const label = typeof country === 'string' ? country : typeof country.label === 'string' ? country.label : value
 

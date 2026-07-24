@@ -1,8 +1,8 @@
 diff --git a/dist/collections/addresses/defaultCountries.js b/dist/collections/addresses/defaultCountries.js
-index 379b414171535a4be12a903c4ad62baae8c761f7..0f4a161f6259a90f9dedb1e1ea25542837b10b50 100644
+index 379b414171535a4be12a903c4ad62baae8c761f7..efa4ec740529961f3595e763928bcbef74607a3d 100644
 --- a/dist/collections/addresses/defaultCountries.js
 +++ b/dist/collections/addresses/defaultCountries.js
-@@ -1,169 +1,111 @@
+@@ -1,169 +1,112 @@
 -/**
 - * Default list of countries supported for forms and payments.
 - * This can be overriden or reused in other parts of the application.
@@ -170,7 +170,7 @@ index 379b414171535a4be12a903c4ad62baae8c761f7..0f4a161f6259a90f9dedb1e1ea255428
 -        value: 'CH'
 -    }
 -];
--
+ 
 -//# sourceMappingURL=defaultCountries.js.map
 \ No newline at end of file
 +export const defaultCountries = [

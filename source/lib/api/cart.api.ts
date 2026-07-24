@@ -1,6 +1,6 @@
 'use server'
 
-import { Cart } from '@/patches/dist/types'
+import { Cart } from '@/payload-types'
 import { getPayloadAPI } from './shared'
 import { unstable_cache } from 'next/cache'
 

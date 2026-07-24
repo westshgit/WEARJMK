@@ -1,5 +1,5 @@
 import type { GroupField, PayloadRequest } from 'payload'
-import type { PaymentAdapterArgs } from '@/patches/dist/types'
+import type { PaymentAdapterArgs } from '@payloadcms/plugin-ecommerce/types'
 
 /**
  * Paystack API base URLs. The live API is used by default; point `apiBase` at a

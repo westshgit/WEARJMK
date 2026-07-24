@@ -1,5 +1,5 @@
 import { Env } from '@/lib/env'
-import { stripeAdapter as createStripeAdapter } from '@/patches/dist/payments/adapters/stripe'
+import { stripeAdapter as createStripeAdapter } from '@payloadcms/plugin-ecommerce/payments/stripe'
 
 export const stripeAdapter = createStripeAdapter({
   secretKey: Env.STRIPE_SECRET_KEY,
