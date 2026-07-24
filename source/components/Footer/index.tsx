@@ -6,7 +6,7 @@ import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { FooterClient } from './index.client'
 
 export async function Footer() {
-  const footer: Footer = await getCachedGlobal('footer', 2)()
+  let footer: Footer = await getCachedGlobal('footer', 2)()
   const social: Social = await getCachedGlobal('social', 1)()
   const discount: Footer['discount'] = footer.discount || null
   const locations: Footer['locations'] = footer.locations || []

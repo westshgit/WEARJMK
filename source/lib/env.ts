@@ -1,13 +1,24 @@
-import 'server-only'
-import path from 'node:path'
-import dotenv from 'dotenv'
 import { z } from 'zod'
+import path from 'node:path'
+import { existsSync } from 'node:fs'
+import dotenv from 'dotenv'
 
 // Next.js loads .env files automatically during dev/build/start.
 // This module is also used by standalone scripts run outside Next (tsx/node),
 // so we load .env manually as a fallback here. dotenv does NOT override
 // variables that are already set, so this is a no-op inside Next.js.
-dotenv.config({ path: path.resolve(process.cwd(), '.env') })
+let envPath = path.resolve(process.cwd(), '.env')
+
+if (!existsSync(envPath)) {
+  // Script may be run from a subdirectory (e.g. scripts/), so go up one level
+  envPath = path.resolve(process.cwd(), '..', '.env')
+}
+
+if (existsSync(envPath)) {
+  dotenv.config({ path: envPath })
+} else {
+  console.warn(`[env] No .env file found at ${envPath} — relying on process.env from the environment`)
+}
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
