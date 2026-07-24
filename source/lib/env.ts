@@ -37,8 +37,8 @@ const schema = z.object({
 
 const _Env = schema.safeParse(process.env)
 
-// if (!_Env.success && (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development')) {
-//   throw new Error(`Invalid environment variables: ${JSON.stringify(_Env.error.format(), null, 2)}`)
-// }
+if (!_Env.success) {
+  throw new Error(`Invalid environment variables: ${JSON.stringify(_Env.error.format(), null, 2)}`)
+}
 
 export const Env = _Env.data
