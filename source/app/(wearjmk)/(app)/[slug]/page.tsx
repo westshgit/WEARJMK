@@ -3,25 +3,35 @@ import type { Metadata } from 'next'
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { generateMeta } from '@/utilities/generateMeta'
 import configPromise from '@payload-config'
-import { draftMode } from 'next/headers'
 import { getPayload } from 'payload'
 
 import { notFound } from 'next/navigation'
 import { queryPageBySlug } from '@/lib/api/page.api'
+import type { Page } from '@/payload-types'
+
+async function getPages() {
+  try {
+    const payload = await getPayload({ config: configPromise })
+    const pages = await payload.find({
+      collection: 'pages',
+      draft: false,
+      limit: 1000,
+      overrideAccess: false,
+      pagination: false,
+      select: {
+        slug: true,
+      },
+    })
+
+    return pages
+  } catch (error) {
+    console.error('Error fetching pages:', error)
+    return { docs: [] } // Return an empty array if there's an error
+  }
+}
 
 export async function generateStaticParams() {
-  const payload = await getPayload({ config: configPromise })
-  const pages = await payload.find({
-    collection: 'pages',
-    draft: false,
-    limit: 1000,
-    overrideAccess: false,
-    pagination: false,
-    select: {
-      slug: true,
-    },
-  })
-
+  const pages = await getPages()
   const params = pages.docs
     ?.filter((doc) => {
       return doc.slug !== 'home'
@@ -66,5 +76,5 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     slug,
   })
 
-  return generateMeta({ doc: page })
+  return generateMeta({ doc: (page ?? {}) as Page })
 }

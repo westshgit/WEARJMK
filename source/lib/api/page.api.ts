@@ -6,7 +6,9 @@ import configPromise from '@payload-config'
 async function getPublishedPageBySlug(slug: string) {
   const payload = await getPayload({ config: configPromise })
 
-  const result = await payload.find({
+
+  try {
+      const result = await payload.find({
     collection: 'pages',
     draft: false,
     limit: 1,
@@ -18,6 +20,10 @@ async function getPublishedPageBySlug(slug: string) {
   })
 
   return result.docs?.[0] || null
+  } catch (error) {
+    console.error('Error fetching published page by slug:', error)
+    return null
+  }
 }
 
 export async function queryPageBySlug({ slug }: { slug: string }) {
