@@ -1,3 +1,4 @@
+"use client"
 import { Social } from '@/payload-types'
 import { knownSocialIcon } from './Const'
 import { CMSLink } from './Link'

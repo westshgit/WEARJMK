@@ -107,5 +107,11 @@
   },
   "engines": {
     "node": "^18.20.2 || >=20.9.0"
+  },
+  "trustedDependencies": [
+    "sharp"
+  ],
+  "patchedDependencies": {
+    "@payloadcms/plugin-ecommerce@3.85.2": "patches/@payloadcms__plugin-ecommerce@3.85.2.patch"
   }
 }
