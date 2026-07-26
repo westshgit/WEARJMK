@@ -1,4 +1,3 @@
-
 import type { GroupField } from 'payload'
 
 import { confirmOrder } from './confirmOrder'

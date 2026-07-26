@@ -15,11 +15,7 @@ export const appearanceOptions: Record<LinkAppearances, { label: string; value: 
   },
 }
 
-type LinkType = (options?: {
-  appearances?: LinkAppearances[] | false
-  disableLabel?: boolean
-  overrides?: Record<string, unknown>
-}) => Field
+type LinkType = (options?: { appearances?: LinkAppearances[] | false; disableLabel?: boolean; overrides?: Record<string, unknown> }) => Field
 
 export const link: LinkType = ({ appearances, disableLabel = false, overrides = {} } = {}) => {
   const linkResult: Field = {

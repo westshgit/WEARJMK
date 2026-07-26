@@ -1,19 +1,19 @@
-import { Block } from "payload";
+import { Block } from 'payload'
 
 export const Policy: Block = {
   slug: 'policy',
-  interfaceName: "PolicyBlock",
+  interfaceName: 'PolicyBlock',
   fields: [
     {
-      name: "policyTitle",
-      label: "Policy Title",
-      type: "text",
+      name: 'policyTitle',
+      label: 'Policy Title',
+      type: 'text',
       required: true,
     },
     {
-      name: "policyDescription",
-      label: "Policy Description",
-      type: "textarea",
+      name: 'policyDescription',
+      label: 'Policy Description',
+      type: 'textarea',
     },
     {
       name: 'policies',

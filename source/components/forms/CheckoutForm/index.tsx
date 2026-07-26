@@ -15,11 +15,7 @@ type Props = {
   setProcessingPayment: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export const CheckoutForm: React.FC<Props> = ({
-  customerEmail,
-  billingAddress,
-  setProcessingPayment,
-}) => {
+export const CheckoutForm: React.FC<Props> = ({ customerEmail, billingAddress, setProcessingPayment }) => {
   const stripe = useStripe()
   const elements = useElements()
   const [error, setError] = React.useState<null | string>(null)
@@ -69,14 +65,8 @@ export const CheckoutForm: React.FC<Props> = ({
                 },
               })
 
-              if (
-                confirmResult &&
-                typeof confirmResult === 'object' &&
-                'orderID' in confirmResult &&
-                confirmResult.orderID
-              ) {
-                const accessToken =
-                  'accessToken' in confirmResult ? (confirmResult.accessToken as string) : ''
+              if (confirmResult && typeof confirmResult === 'object' && 'orderID' in confirmResult && confirmResult.orderID) {
+                const accessToken = 'accessToken' in confirmResult ? (confirmResult.accessToken as string) : ''
                 const queryParams = new URLSearchParams()
 
                 if (customerEmail) {

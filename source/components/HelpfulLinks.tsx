@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import type { ReactNode } from 'react'
 
@@ -14,13 +14,9 @@ type HelpfulLinksProps = {
   links: Array<HelpfulLink | ReactNode>
 }
 
-const isHelpfulLink = (link: HelpfulLink | ReactNode): link is HelpfulLink =>
-  typeof link === 'object' && link !== null && 'label' in link && 'href' in link
+const isHelpfulLink = (link: HelpfulLink | ReactNode): link is HelpfulLink => typeof link === 'object' && link !== null && 'label' in link && 'href' in link
 
-export default function HelpfulLinks({
-  label = 'Other helpful links:',
-  links,
-}: HelpfulLinksProps) {
+export default function HelpfulLinks({ label = 'Other helpful links:', links }: HelpfulLinksProps) {
   return (
     <div className="w-full max-w-md border-t pt-8">
       <p className="mb-4 text-sm text-muted-foreground">{label}</p>

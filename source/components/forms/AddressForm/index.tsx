@@ -18,7 +18,6 @@ import Condition from '@/components/Condition'
 import { RiEdit2Fill } from '@remixicon/react'
 import { defaultCountries as supportedCountries } from '@payloadcms/plugin-ecommerce/client/react'
 
-
 type Props = {
   addressID?: Config['db']['defaultIDType']
   initialData?: Omit<Address, 'country' | 'id' | 'updatedAt' | 'createdAt'> & { country?: string }

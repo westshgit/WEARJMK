@@ -19,9 +19,7 @@ export const OrderItem: React.FC<Props> = ({ order }) => {
 
         <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-6">
           <p className="text-xl">
-            <time dateTime={order.createdAt}>
-              {formatDateTime({ date: order.createdAt, format: 'MMMM dd, yyyy' })}
-            </time>
+            <time dateTime={order.createdAt}>{formatDateTime({ date: order.createdAt, format: 'MMMM dd, yyyy' })}</time>
           </p>
 
           {order.status && <OrderStatus status={order.status} />}

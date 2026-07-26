@@ -1,55 +1,45 @@
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { MapPin, Clock, Copy, Check, ArrowUpRight } from "lucide-react";
+import { useState } from 'react'
+import { Card } from '@/components/ui/card'
+import { MapPin, Clock, Copy, Check, ArrowUpRight } from 'lucide-react'
 // Swap for your Remix Icons: RiMapPin2Line, RiTimeLine, RiFileCopyLine, RiCheckLine, RiArrowRightUpLine
 
 function getStatus(opens: number, closes: number) {
-  const hour = new Date().getHours() + new Date().getMinutes() / 60;
-  const isOpen = hour >= opens && hour < closes;
-  const fmt = (h: number) => `${h % 12 === 0 ? 12 : h % 12}${h >= 12 ? "PM" : "AM"}`;
+  const hour = new Date().getHours() + new Date().getMinutes() / 60
+  const isOpen = hour >= opens && hour < closes
+  const fmt = (h: number) => `${h % 12 === 0 ? 12 : h % 12}${h >= 12 ? 'PM' : 'AM'}`
   return {
     isOpen,
     label: isOpen ? `Open · closes ${fmt(closes)}` : `Closed · opens ${fmt(opens)}`,
-  };
+  }
 }
 
 interface Store {
-  id: string;
-  name: string;
-  address: string;
-  opens: number;
-  closes: number;
+  id: string
+  name: string
+  address: string
+  opens: number
+  closes: number
 }
 
 function StoreCard({ store }: { store: Store }) {
-  const [copied, setCopied] = useState(false);
-  const status = getStatus(store.opens, store.closes);
-  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    store.address
-  )}`;
+  const [copied, setCopied] = useState(false)
+  const status = getStatus(store.opens, store.closes)
+  const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}`
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(store.address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      await navigator.clipboard.writeText(store.address)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
     } catch {}
-  };
+  }
 
   return (
     <Card className="w-full max-w-sm shrink-0 snap-start">
       <div className="flex items-start justify-between gap-3">
         <h5 className="font-serif text-lg text-[#221d17]">{store.name}</h5>
-        <span
-          className={`mt-1 flex items-center gap-1.5 whitespace-nowrap text-[11px] tracking-wide ${
-            status.isOpen ? "text-[#6b7c5c]" : "text-[#a08a6b]"
-          }`}
-        >
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${
-              status.isOpen ? "bg-[#6b7c5c]" : "bg-[#a08a6b]"
-            }`}
-          />
+        <span className={`mt-1 flex items-center gap-1.5 whitespace-nowrap text-[11px] tracking-wide ${status.isOpen ? 'text-[#6b7c5c]' : 'text-[#a08a6b]'}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${status.isOpen ? 'bg-[#6b7c5c]' : 'bg-[#a08a6b]'}`} />
           {status.label}
         </span>
       </div>
@@ -90,7 +80,7 @@ function StoreCard({ store }: { store: Store }) {
         </a>
       </div>
     </Card>
-  );
+  )
 }
 
 export default function VisitUs({ store }: { store: Store[] }) {
@@ -103,5 +93,5 @@ export default function VisitUs({ store }: { store: Store[] }) {
         ))}
       </div>
     </div>
-  );
+  )
 }

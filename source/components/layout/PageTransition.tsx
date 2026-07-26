@@ -24,13 +24,7 @@ export function PageTransition({ children }: { children: ReactNode }) {
 
   return (
     <AnimatePresence mode="wait">
-      <motion.main
-        key={pathname}
-        variants={pageVariants}
-        initial="hidden"
-        animate="visible"
-        exit="exit"
-      >
+      <motion.main key={pathname} variants={pageVariants} initial="hidden" animate="visible" exit="exit">
         {children}
       </motion.main>
     </AnimatePresence>

@@ -1,4 +1,3 @@
-
 import { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 import { DEFAULT_PAYSTACK_API_BASE } from './types'
 import type { PaystackResponse, PaystackTransactionData } from './types'

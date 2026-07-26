@@ -1,19 +1,19 @@
-import { Block } from "payload";
+import { Block } from 'payload'
 
 export const ShowCase: Block = {
   slug: 'showcase',
-  interfaceName: "ShowCase",
+  interfaceName: 'ShowCase',
   fields: [
     {
-      name: "showCaseTitle",
-      label: "ShowCase Title",
-      type: "text",
+      name: 'showCaseTitle',
+      label: 'ShowCase Title',
+      type: 'text',
       required: true,
     },
     {
-      name: "showCaseDescription",
-      label: "ShowCase Description",
-      type: "textarea",
+      name: 'showCaseDescription',
+      label: 'ShowCase Description',
+      type: 'textarea',
       required: true,
     },
     {

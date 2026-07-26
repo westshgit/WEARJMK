@@ -1,4 +1,4 @@
-"use client"
+'use client'
 export * from './cn'
 export * from './canUseDOM'
 export * from './capitaliseFirstLetter'

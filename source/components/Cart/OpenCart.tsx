@@ -1,14 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { RiShoppingCart2Line } from '@remixicon/react'
 
-export function OpenCartButton({
-  className,
-  quantity,
-  ...rest
-}: {
-  className?: string
-  quantity?: number
-}) {
+export function OpenCartButton({ className, quantity, ...rest }: { className?: string; quantity?: number }) {
   return (
     <Button variant="ghost" size="sm" className="hover:cursor-pointer" {...rest}>
       <RiShoppingCart2Line />

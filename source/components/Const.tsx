@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import BrandImage from '@/components/BrandImage'
 import { RiInstagramLine, RiFacebookFill, RiTiktokLine } from '@remixicon/react'

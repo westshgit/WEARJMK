@@ -26,16 +26,7 @@ export const Video: React.FC<MediaProps> = (props) => {
     const { filename, url } = resource
 
     return (
-      <video
-        autoPlay
-        className={cn(videoClassName)}
-        controls={false}
-        loop
-        muted
-        onClick={onClick}
-        playsInline
-        ref={videoRef}
-      >
+      <video autoPlay className={cn(videoClassName)} controls={false} loop muted onClick={onClick} playsInline ref={videoRef}>
         <source src={getMediaSrc({ filename, url })} />
       </video>
     )

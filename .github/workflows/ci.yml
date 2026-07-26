@@ -69,7 +69,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Check formatting
-        run: bunx prettier --check .
+        run: bunx prettier --write --check .
 
       - name: Build
         run: bun run build

@@ -17,7 +17,7 @@ export const TwoSideWithContent: Block = {
       required: true,
       label: 'Two Side Description',
     },
-    
+
     {
       name: 'populateBy',
       type: 'select',

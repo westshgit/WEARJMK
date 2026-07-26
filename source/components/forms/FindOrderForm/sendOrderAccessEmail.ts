@@ -11,10 +11,7 @@ export type SendOrderAccessEmailArgs = {
   orderID: string
 }
 
-export async function sendOrderAccessEmail({
-  email,
-  orderID,
-}: SendOrderAccessEmailArgs): Promise<ActionResult<null>> {
+export async function sendOrderAccessEmail({ email, orderID }: SendOrderAccessEmailArgs): Promise<ActionResult<null>> {
   const payload = await getPayload({ config: configPromise })
 
   try {

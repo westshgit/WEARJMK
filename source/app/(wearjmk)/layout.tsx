@@ -58,7 +58,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </head>
       <body className="relative">
         <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <Suspense fallback={null}><MessageRenderer /></Suspense>
+          <Suspense fallback={null}>
+            <MessageRenderer />
+          </Suspense>
           <SonnerProvider>
             <TooltipProvider>{children}</TooltipProvider>
           </SonnerProvider>
