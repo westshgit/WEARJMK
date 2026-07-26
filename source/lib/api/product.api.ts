@@ -2,8 +2,9 @@
 
 import type { Category, Product } from '@/payload-types'
 import { unstable_cache } from 'next/cache'
-import { getPayloadAPI } from './shared'
+import { genericCollectionChangeHook, getPayloadAPI } from './shared'
 import { draftMode } from 'next/headers'
+import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
 
 async function _getProductsByCategory({ categories, limit }: { categories?: (number | Category)[] | null; limit: number | null }): Promise<Product[]> {
   const payload = await getPayloadAPI()
@@ -114,3 +115,57 @@ export async function queryProductBySlug({ slug }: { slug: string }): Promise<Pr
     revalidate: 3600,
   })()
 }
+
+export const revalidateProduct = genericCollectionChangeHook<CollectionAfterChangeHook<Product>>([
+  {
+    getCacheKey: () => 'products',
+    tagOrPath: {
+      tag: 'tag',
+    },
+  },
+  {
+    getCacheKey: ({ doc }) => `product-${doc.slug}`,
+    tagOrPath: {
+      tag: 'tag',
+    },
+    shouldRevalidateHook: ({ doc }) => Boolean(doc.slug),
+  },
+  {
+    getCacheKey: ({ previousDoc }) => `product-${previousDoc.slug}`,
+    tagOrPath: {
+      tag: 'tag',
+    },
+    shouldRevalidateHook: ({ doc, previousDoc }) => Boolean(previousDoc?.slug && previousDoc.slug !== doc.slug),
+  },
+  {
+    getCacheKey: ({ doc }) => `/products/${doc.slug}`,
+    tagOrPath: 'path',
+    shouldRevalidateHook: ({ doc }) => doc._status === 'published' && Boolean(doc.slug),
+  },
+  {
+    getCacheKey: ({ previousDoc }) => `/products/${previousDoc.slug}`,
+    tagOrPath: 'path',
+    shouldRevalidateHook: ({ doc, previousDoc }) => Boolean(previousDoc?.slug && previousDoc._status === 'published' && previousDoc.slug !== doc.slug),
+  },
+])
+
+export const revalidateProductDelete = genericCollectionChangeHook<CollectionAfterDeleteHook<Product>>([
+  {
+    getCacheKey: () => 'products',
+    tagOrPath: {
+      tag: 'tag',
+    },
+  },
+  {
+    getCacheKey: ({ doc }) => `product-${doc.slug}`,
+    tagOrPath: {
+      tag: 'tag',
+    },
+    shouldRevalidateHook: ({ doc }) => Boolean(doc.slug),
+  },
+  {
+    getCacheKey: ({ doc }) => `/products/${doc.slug}`,
+    tagOrPath: 'path',
+    shouldRevalidateHook: ({ doc }) => doc._status === 'published' && Boolean(doc.slug),
+  },
+])

@@ -4,15 +4,17 @@ This project uses the Payload CMS skill at `.agents/skills/payload/`.
 Start with `.agents/skills/payload/SKILL.md` for a quick reference, then see `.agents/skills/payload/reference/` for detailed docs.
 
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+
 <!-- END:nextjs-agent-rules -->
 
 ## Generated files rule
 
 - Never manually edit `payload-types.ts`; it is auto-generated.
-- Don't run any command without permission or leave it to me to run it 
+- Don't run any command without permission or leave it to me to run it
 - We are using pnpm so run every scripts with pnpm <package.json scripts> or pnpm dlx
 - Always load every `.agents/skills/*` before writing any code. They contain important rules and guidelines for the project.
 - Always check the `.agents/skills/payload/reference/` for detailed documentation on Payload CMS usage and best practices.
@@ -20,7 +22,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Once again don't run any command unless explicitly instructed to do so and don't edit any auto-generated files. like `src/payload-types.ts` Always follow the guidelines and best practices outlined in the agent skills and reference documentation.
 - Should you need to modify or read files ask for permission and it would be granted or denied based on the context. Always follow the guidelines and best practices outlined in the agent skills and reference documentation.
 
-## Technology Stack 
+## Technology Stack
 
 - React 19
 - Next.js 14
@@ -29,7 +31,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - TypeScript 6
 - Shadcn UI
 - Embla Carousel
-
+- Bun
 
 ## Code Smell and Forbidden Practices
 

@@ -1,6 +1,7 @@
 import type { Category } from '@/payload-types'
 import { unstable_cache } from 'next/cache'
-import { getPayloadAPI } from './shared'
+import { genericCollectionChangeHook, getPayloadAPI } from './shared'
+import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
 
 async function _fetchCategories(): Promise<Category[]> {
   const payload = await getPayloadAPI()
@@ -25,3 +26,21 @@ export const fetchCategories = unstable_cache(_fetchCategories, ['categories'], 
   tags: ['categories'],
   revalidate: 3600,
 })
+
+export const revalidateCategories = genericCollectionChangeHook<CollectionAfterChangeHook<Category>>([
+  {
+    getCacheKey: () => 'categories',
+    tagOrPath: {
+      tag: 'tag',
+    },
+  },
+])
+
+export const revalidateCategoriesDelete = genericCollectionChangeHook<CollectionAfterDeleteHook<Category>>([
+  {
+    getCacheKey: () => 'categories',
+    tagOrPath: {
+      tag: 'tag',
+    },
+  },
+])

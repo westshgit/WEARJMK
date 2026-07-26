@@ -1,8 +1,7 @@
-'use server'
-
 import { Cart } from '@/payload-types'
-import { getPayloadAPI } from './shared'
+import { CacheKey, genericCollectionChangeHook, getPayloadAPI } from './shared'
 import { unstable_cache } from 'next/cache'
+import { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
 
 async function _getCartById(cartId: number): Promise<Cart | null> {
   const payload = await getPayloadAPI()
@@ -18,7 +17,27 @@ async function _getCartById(cartId: number): Promise<Cart | null> {
 
 export async function getCartById(cartId: number) {
   return unstable_cache(() => _getCartById(cartId), ['cart', cartId.toString()], {
-    tags: [`cart-${cartId}`],
-    revalidate: 60, // seconds — tune or drop if you want tag-only invalidation
+    tags: [getCartByIdCacheKey(cartId)],
+    revalidate: false,
   })()
 }
+
+export const getCartByIdCacheKey: CacheKey<number | string> = (args) => `cart-${args}`
+
+export const revalidateCart = genericCollectionChangeHook<CollectionAfterChangeHook<Cart>>([
+  {
+    getCacheKey: ({ doc }) => getCartByIdCacheKey(doc.id),
+    tagOrPath: {
+      tag: 'tag',
+    },
+  },
+])
+
+export const revalidateCartDelete = genericCollectionChangeHook<CollectionAfterDeleteHook<Cart>>([
+  {
+    getCacheKey: ({ doc }) => getCartByIdCacheKey(doc.id),
+    tagOrPath: {
+      tag: 'tag',
+    },
+  },
+])

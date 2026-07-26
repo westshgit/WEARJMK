@@ -10,7 +10,7 @@ import { TwoSideWithContent } from '@/blocks/TwoSideWithContent/config'
 import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { MetaDescriptionField, MetaImageField, MetaTitleField, OverviewField, PreviewField } from '@payloadcms/plugin-seo/fields'
 import { slugField } from 'payload'
-import { revalidateDelete, revalidatePage } from './hooks/revalidatePage'
+import { revalidateDelete, revalidatePage } from '@/lib/api/page.api'
 
 export const Pages: CollectionConfig = {
   slug: 'pages',

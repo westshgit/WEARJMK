@@ -3,6 +3,7 @@ import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import { MetaDescriptionField, MetaImageField, MetaTitleField, OverviewField, PreviewField } from '@payloadcms/plugin-seo/fields'
 import { DefaultDocumentIDType, Where } from 'payload'
+import { revalidateProduct, revalidateProductDelete } from '@/lib/api/product.api'
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,
@@ -236,4 +237,9 @@ export const ProductsCollection: CollectionOverride = ({ defaultCollection }) =>
     },
     slugField(),
   ],
+  hooks: {
+    ...defaultCollection.hooks,
+    afterChange: [revalidateProduct, ...(defaultCollection.hooks?.afterChange || [])],
+    afterDelete: [revalidateProductDelete, ...(defaultCollection.hooks?.afterDelete || [])],
+  },
 })
