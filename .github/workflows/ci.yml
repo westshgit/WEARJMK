@@ -65,6 +65,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-bun-
 
+      - name: List available environment keys
+        run: bun -e "Object.keys(process.env).sort().forEach((key) => console.log(key))"
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
