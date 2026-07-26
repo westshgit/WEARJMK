@@ -1,105 +1,246 @@
 'use server'
-import { ActionResult } from '../shared'
-import { Address, Cart } from '@/payload-types'
+
+import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
+
+import type { Cart } from '@/payload-types'
 import { paystackAdapter } from './payment/paystack/paystackAdapter'
-import { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 import zod from 'zod'
 import { emailSchema } from '../schema/authentication'
 import { addressSchema } from '../schema/address'
 import { flattenZodErrors } from '../schema'
-import { getCartById } from './cart.api'
-import { getUserTransactionByCartId } from './transaction.api'
+import { syntheticServerRequest } from './shared'
+import type { ActionResult } from '../shared'
+
+export type PaystackPaymentData = {
+  accessCode: string
+  authorizationUrl: string
+  provider: 'paystack'
+  reference: string
+  transactionID: string | number
+}
+
+export type PaystackConfirmationData = {
+  accessToken?: string
+  orderID: string | number
+}
 
 export interface InitializePaymentArgs {
   cart: Cart
   email: string
-  billingAddress: Address
+  billingAddress: zod.infer<typeof addressSchema>
   shippingAddress:
     | {
         sameAsBilling: true
       }
     | {
         sameAsBilling: false
-        address: Address
+        address: zod.infer<typeof addressSchema>
       }
 }
 
+type InitiatePaymentResponse = {
+  accessCode?: unknown
+  authorizationUrl?: unknown
+  reference?: unknown
+  transactionID?: unknown
+}
+
+type ConfirmPaymentResponse = {
+  accessToken?: unknown
+  orderID?: unknown
+}
+
 const initializePaymentSchema = zod.object({
-  // if id is valid we don't trust cart currency and instead use the cart currency from the database to ensure that the payment gateway is always correct.
   cartId: zod.number(),
+  cartSecret: zod.string().min(1).optional(),
   email: emailSchema,
   billingAddress: addressSchema,
   shippingAddress: zod.union([zod.object({ sameAsBilling: zod.literal(true) }), zod.object({ sameAsBilling: zod.literal(false), address: addressSchema })]),
 })
 
-export async function initializePayment(args: InitializePaymentArgs): Promise<ActionResult<string | 'paystack'>> {
-  console.dir(args, { depth: 3 })
+const confirmPaymentSchema = zod.object({
+  reference: zod.string().min(1).max(200).regex(/^[A-Za-z0-9.=-]+$/),
+})
+
+type InitiatePayment = NonNullable<PaymentAdapter['initiatePayment']>
+type InitiatePaymentData = Parameters<InitiatePayment>[0]['data']
+
+function getRelationID(value: number | { id: number } | null | undefined): number | undefined {
+  if (typeof value === 'number') return value
+  return value?.id
+}
+
+function toPaymentAddress(address: zod.infer<typeof addressSchema>): InitiatePaymentData['billingAddress'] {
+  // The plugin types this transport value as a persisted Address, although its
+  // adapters only consume the address fields and do not require document metadata.
+  return address as unknown as InitiatePaymentData['billingAddress']
+}
+
+function toPaymentCart(cart: Cart, currency: string, subtotal: number): InitiatePaymentData['cart'] {
+  // Payload's generated Cart permits nullable persisted fields while the
+  // payment adapter accepts the same transport shape with normalized values.
+  return {
+    ...cart,
+    currency,
+    items: cart.items ?? [],
+    subtotal,
+  } as unknown as InitiatePaymentData['cart']
+}
+
+export async function initializePayment(args: InitializePaymentArgs): Promise<ActionResult<PaystackPaymentData>> {
   const parsedArgs = initializePaymentSchema.safeParse({
     cartId: args.cart.id,
-    cartCurrency: args.cart.currency,
+    cartSecret: args.cart.secret ?? undefined,
     email: args.email,
     billingAddress: args.billingAddress,
     shippingAddress: args.shippingAddress,
   })
+
   if (!parsedArgs.success) {
     return {
       success: false,
-      formError: 'Invalid DATA',
+      formError: 'Invalid checkout details.',
       fieldErrors: flattenZodErrors(parsedArgs.error),
     }
   }
-  const { cartId, email, billingAddress, shippingAddress } = parsedArgs.data
-  const cart = await getCartById(cartId)
-  if (!cart) return { success: false, formError: 'Cart not found' }
-  if (!cart.currency) return { success: false, formError: "Something went wrong: we couldn't process the payment right now" }
 
-  const existingTransaction = await getUserTransactionByCartId(cartId, email)
+  const { billingAddress, cartId, cartSecret, email, shippingAddress } = parsedArgs.data
 
-  // Transaction already exists for this cart and user, we can skip the payment gateway initiation and return a success response.
-  if (
-    existingTransaction &&
-    existingTransaction.status !== 'succeeded' &&
-    existingTransaction.status !== 'expired' &&
-    existingTransaction.status !== 'refunded'
-  ) {
-    // Yes the transaction exists and in a state that allows for payment processing, we can return a success response.
-    // for them to continue
-    return { success: true, data: 'paystack' }
+  try {
+    const req = await syntheticServerRequest()
+    const payload = req.payload
+    let cart = (await payload.findByID({
+      collection: 'carts',
+      id: cartId,
+      depth: 2,
+      req,
+    })) as Cart | null
+
+    if (!cart) return { success: false, formError: 'Cart not found.' }
+
+    const cartCustomerID = getRelationID(cart.customer)
+    const canAccessCart =
+      Boolean(req.user && cartCustomerID === req.user.id) ||
+      Boolean(cartSecret && cart.secret && cartSecret === cart.secret)
+
+    if (!canAccessCart) {
+      return { success: false, formError: 'You do not have access to this cart.' }
+    }
+
+    if (cart.status === 'purchased' || cart.purchasedAt) {
+      return { success: false, formError: 'This cart has already been purchased.' }
+    }
+
+    cart = (await payload.update({
+      collection: 'carts',
+      id: cart.id,
+      data: {
+        items: cart.items ?? [],
+      },
+      depth: 2,
+      req,
+    })) as Cart
+
+    if (!cart.currency) {
+      return { success: false, formError: "Something went wrong: we couldn't process the payment right now." }
+    }
+
+    if (typeof cart.subtotal !== 'number' || !Number.isSafeInteger(cart.subtotal) || cart.subtotal <= 0) {
+      return { success: false, formError: 'Your cart has an invalid total.' }
+    }
+
+    const paymentCurrency = getPaymentAdapter(cart.currency)
+    const paymentGateway = getPaymentGateway(paymentCurrency)
+
+    if (!paymentGateway.initiatePayment) {
+      return { success: false, formError: 'Selected payment method cannot initiate payments.' }
+    }
+
+    const paymentCart = toPaymentCart(cart, cart.currency, cart.subtotal)
+
+    const paymentResult = await paymentGateway.initiatePayment({
+      data: {
+        billingAddress: toPaymentAddress(billingAddress),
+        cart: paymentCart,
+        currency: cart.currency,
+        customerEmail: email,
+        shippingAddress: toPaymentAddress(shippingAddress.sameAsBilling ? billingAddress : shippingAddress.address),
+      },
+      req,
+      transactionsSlug: 'transactions',
+    })
+
+    const paystackResult = paymentResult as InitiatePaymentResponse
+
+    if (
+      typeof paystackResult.authorizationUrl !== 'string' ||
+      typeof paystackResult.reference !== 'string' ||
+      typeof paystackResult.accessCode !== 'string' ||
+      (typeof paystackResult.transactionID !== 'string' && typeof paystackResult.transactionID !== 'number')
+    ) {
+      return { success: false, formError: 'Payment provider returned an invalid response.' }
+    }
+
+    return {
+      success: true,
+      data: {
+        accessCode: paystackResult.accessCode,
+        authorizationUrl: paystackResult.authorizationUrl,
+        provider: 'paystack',
+        reference: paystackResult.reference,
+        transactionID: paystackResult.transactionID,
+      },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      formError: error instanceof Error ? error.message : 'Unable to initialize payment.',
+    }
   }
-
-  // Here we will continue to initiate the payment if the previous transaction was succesful we wanna warn the user that they have already paid for this cart and they should check their email for the receipt or contact support if they have any issues.
-  // Trust cart.currency from DB, not client-supplied cartCurrency
-  const paymentCurrency = getPaymentAdapter(cart.currency)
-  const _paymentGateway = getPaymentGateway(paymentCurrency)
-
-  // Check if the cart has been processed for payment already. If so, we can skip the payment gateway initiation and return a success response.
-  // for that to confirm the order
-  // The order must be in a state that allows for payment processing (e.g., not already paid or completed).
-  // else we continue to initiate the payment gateway
-
-  // const paymentResult = await _paymentGateway.initiatePayment({
-  //   cart,
-  //   email,
-  //   billingAddress,
-  //   shippingAddress,
-  // })
-
-  // const paymentResult = await _paymentGateway.initiatePayment({
-  //   cart,
-  //   email,
-  //   billingAddress,
-  //   shippingAddress,
-  // })
-
-  return { success: true, data: 'paystack' }
 }
 
-function getPaymentAdapter(_paymentCurrency: string): 'stripe' | 'paystack' {
-  // This is just a bulletproof way to ensure that the payment currency is always in uppercase, regardless of how it's passed in.
-  const paymentCurrency = _paymentCurrency.toUpperCase()
-  if (paymentCurrency === 'USD' || paymentCurrency === 'EUR') {
-    return 'stripe'
+export async function confirmPaystackPayment(reference: string): Promise<ActionResult<PaystackConfirmationData>> {
+  const parsedReference = confirmPaymentSchema.safeParse({ reference })
+  if (!parsedReference.success) {
+    return { success: false, formError: 'Invalid payment reference.' }
   }
+
+  if (!paystackAdapter.confirmOrder) {
+    return { success: false, formError: 'Paystack order confirmation is unavailable.' }
+  }
+
+  try {
+    const result = (await paystackAdapter.confirmOrder({
+      cartsSlug: 'carts',
+      data: {
+        reference: parsedReference.data.reference,
+      },
+      ordersSlug: 'orders',
+      req: await syntheticServerRequest(),
+      transactionsSlug: 'transactions',
+    })) as ConfirmPaymentResponse
+
+    if (typeof result.orderID !== 'string' && typeof result.orderID !== 'number') {
+      return { success: false, formError: 'Payment provider returned an invalid order.' }
+    }
+
+    return {
+      success: true,
+      data: {
+        orderID: result.orderID,
+        ...(typeof result.accessToken === 'string' ? { accessToken: result.accessToken } : {}),
+      },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      formError: error instanceof Error ? error.message : 'Unable to confirm payment.',
+    }
+  }
+}
+
+function getPaymentAdapter(_paymentCurrency: string): 'paystack' {
+  const paymentCurrency = _paymentCurrency.toUpperCase()
 
   if (paymentCurrency === 'NGN') {
     return 'paystack'
@@ -108,11 +249,10 @@ function getPaymentAdapter(_paymentCurrency: string): 'stripe' | 'paystack' {
   throw new Error(`Unsupported payment currency: ${paymentCurrency}`)
 }
 
-function getPaymentGateway(paymentCurrency: 'stripe' | 'paystack'): PaymentAdapter {
-  // if (paymentCurrency === 'stripe') {
-  //   return stripeAdapter
+function getPaymentGateway(paymentCurrency: 'paystack'): PaymentAdapter {
   if (paymentCurrency === 'paystack') {
     return paystackAdapter
   }
+
   throw new Error(`Unsupported payment gateway: ${paymentCurrency}`)
 }

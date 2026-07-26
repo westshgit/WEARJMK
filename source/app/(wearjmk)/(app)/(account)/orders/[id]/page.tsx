@@ -1,4 +1,4 @@
-import type { Order } from '@/payload-types'
+import type { Order, Transaction, Product } from '@/payload-types'
 import type { Metadata } from 'next'
 
 import { Price } from '@/components/Price'
@@ -39,7 +39,7 @@ export default async function Order({ params, searchParams }: PageProps) {
       collection: 'orders',
       user,
       overrideAccess: !Boolean(user),
-      depth: 2,
+      depth: 3,
       where: {
         and: [
           {
@@ -86,16 +86,43 @@ export default async function Order({ params, searchParams }: PageProps) {
       },
     })
 
-    const canAccessAsGuest = !user && email && accessToken && orderResult && orderResult.customerEmail && orderResult.customerEmail === email
+    const canAccessAsGuest = !user && Boolean(accessToken) && Boolean(orderResult)
     const canAccessAsUser =
       user && orderResult && orderResult.customer && (typeof orderResult.customer === 'object' ? orderResult.customer.id : orderResult.customer) === user.id
 
     if (orderResult && (canAccessAsGuest || canAccessAsUser)) {
       order = orderResult
+
+      if (typeof order.amount !== 'number' || order.amount <= 0) {
+        const transactionResult = await payload.find({
+          collection: 'transactions',
+          limit: 1,
+          overrideAccess: true,
+          select: {
+            amount: true,
+            currency: true,
+          },
+          sort: '-createdAt',
+          where: {
+            and: [{ order: { equals: order.id } }, { status: { equals: 'succeeded' } }, { amount: { greater_than: 0 } }],
+          },
+        })
+        const transaction = transactionResult.docs[0] as Transaction | undefined
+
+        if (transaction?.amount) {
+          order = {
+            ...order,
+            amount: transaction.amount,
+            currency: transaction.currency ?? order.currency,
+          }
+        }
+      }
     }
   } catch (error) {
     console.error(error)
   }
+
+  console.dir(order, { depth: 5 })
 
   if (!order) {
     notFound()
@@ -106,7 +133,7 @@ export default async function Order({ params, searchParams }: PageProps) {
       <div className="flex gap-8 justify-between items-center mb-6">
         {user ? (
           <div className="flex gap-4">
-            <Button asChild variant="ghost">
+            <Button asChild variant="ghost" className="uppercase">
               <Link href="/orders">
                 <ChevronLeftIcon />
                 All orders
@@ -133,7 +160,11 @@ export default async function Order({ params, searchParams }: PageProps) {
 
           <div className="">
             <p className="font-mono uppercase text-primary/50 mb-1 text-sm">Total</p>
-            {order.amount && <Price className="text-lg" amount={order.amount} />}
+            {typeof order.amount === 'number' && order.amount > 0 ? (
+              <Price className="text-lg" amount={order.amount} currencyCode={order.currency ?? undefined} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Amount unavailable</p>
+            )}
           </div>
 
           {order.status && (

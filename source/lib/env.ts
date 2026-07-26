@@ -36,6 +36,10 @@ const schema = z.object({
   STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
   STRIPE_WEBHOOKS_SIGNING_SECRET: z.string().startsWith('whsec_'),
   PAYSTACK_SECRET_KEY: z.string().startsWith('sk_'),
+  PAYSTACK_API_BASE_URL: z.url(),
+  PAYSTACK_CALLBACK_URL: z.url(),
+  PAYSTACK_REFERENCE_PREFIX: z.string().regex(/^[A-Za-z0-9.=-]+$/),
+  PAYSTACK_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().max(30_000).default(10_000),
 
   // --- public (kept here too for server-side convenience/consistency;
   // client components must still reference process.env.NEXT_PUBLIC_X

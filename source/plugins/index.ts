@@ -110,6 +110,16 @@ export const plugins: Plugin[] = [
         fields: [
           ...defaultCollection.fields,
           {
+            name: 'paymentReference',
+            type: 'text',
+            unique: true,
+            index: true,
+            admin: {
+              hidden: true,
+              readOnly: true,
+            },
+          },
+          {
             name: 'accessToken',
             type: 'text',
             unique: true,

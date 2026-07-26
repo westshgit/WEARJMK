@@ -2,14 +2,6 @@ import type { GroupField, PayloadRequest } from 'payload'
 import type { PaymentAdapterArgs } from '@payloadcms/plugin-ecommerce/types'
 
 /**
- * Paystack API base URLs. The live API is used by default; point `apiBase` at a
- * mock/localstack instance for testing.
- *
- * @see https://paystack.com/docs/api/
- */
-export const DEFAULT_PAYSTACK_API_BASE = 'https://api.paystack.co'
-
-/**
  * A handler invoked when a Paystack webhook event is received. The event name
  * (e.g. `charge.success`, `charge.failed`) is used as the lookup key.
  *
@@ -32,12 +24,24 @@ export type PaystackAdapterArgs = {
    * Paystack secret key. Used for both API auth (`Bearer <secretKey>`) and to
    * verify webhook signatures. Find it under Dashboard → Settings → API Keys
    * & Webhooks. Use `sk_test_...` for the sandbox and `sk_live_...` in prod.
-   */
+  */
   secretKey: string
   /**
-   * Override the Paystack REST API base. Defaults to the live API.
+   * Paystack REST API base URL.
    */
-  apiBase?: string
+  apiBase: string
+  /**
+   * Fully-qualified URL Paystack redirects the customer to after checkout.
+   */
+  callbackUrl: string
+  /**
+   * Prefix used for generated Paystack references.
+   */
+  referencePrefix: string
+  /**
+   * Maximum time to wait for a Paystack API response.
+   */
+  requestTimeoutMs: number
   /**
    * Optional webhook handlers keyed by event type. When a verified webhook
    * arrives, the matching handler is invoked.
@@ -57,8 +61,8 @@ export type PaystackAdapterArgs = {
 
 /**
  * The default fields stored on a transaction for the `paystack` payment
- * method. The `reference` is what we generate and pass to Paystack; the
- * `accessCode` is returned by Paystack and used to open the inline popup.
+ * method. The `reference`, `accessCode`, and authorization URL are persisted
+ * so retries can safely resume the same pending payment.
  */
 export type PaystackGroupField = GroupField
 
@@ -85,7 +89,7 @@ export type PaystackInitializeData = {
 export type PaystackTransactionData = {
   id: number
   domain: string
-  status: 'success' | 'failed' | 'abandoned' | 'pending' | 'reversed'
+  status: 'success' | 'failed' | 'abandoned' | 'ongoing' | 'pending' | 'processing' | 'queued' | 'reversed'
   reference: string
   amount: number
   currency: string
@@ -94,12 +98,12 @@ export type PaystackTransactionData = {
     id: number
     email: string
   }
-  metadata: Record<string, unknown> | null
+  metadata: Record<string, unknown> | string | null
 }
 
 /** Payload of a Paystack webhook event. */
 export type PaystackWebhookEvent = {
-  event: string
+  event: 'charge.success' | string
   data: {
     id: number
     domain: string
@@ -112,6 +116,6 @@ export type PaystackWebhookEvent = {
       email: string
       customer_code: string
     }
-    metadata: Record<string, unknown> | null
+    metadata: Record<string, unknown> | string | null
   }
 }

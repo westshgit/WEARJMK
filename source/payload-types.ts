@@ -367,6 +367,7 @@ export interface Order {
   status?: OrderStatus;
   amount?: number | null;
   currency?: 'NGN' | null;
+  paymentReference?: string | null;
   accessToken?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -558,6 +559,7 @@ export interface Transaction {
   paystack?: {
     reference: string;
     accessCode?: string | null;
+    authorizationUrl?: string | null;
   };
   billingAddress?: {
     title?: string | null;
@@ -1868,6 +1870,7 @@ export interface OrdersSelect<T extends boolean = true> {
   status?: T;
   amount?: T;
   currency?: T;
+  paymentReference?: T;
   accessToken?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1891,6 +1894,7 @@ export interface TransactionsSelect<T extends boolean = true> {
     | {
         reference?: T;
         accessCode?: T;
+        authorizationUrl?: T;
       };
   billingAddress?:
     | T

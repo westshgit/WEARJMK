@@ -88,6 +88,7 @@ export const CheckoutPage: React.FC<{ user?: User; policyBlock: PolicyBlock | un
               }}
             >
               <Button
+                type="button"
                 variant={'outline'}
                 className="self-start text-start uppercase cursor-pointer  h-16 w-full justify-between gap-2 md:max-w-md"
                 disabled={!canGoToPayment || formIsPending}

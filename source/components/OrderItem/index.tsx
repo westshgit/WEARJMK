@@ -29,16 +29,18 @@ export const OrderItem: React.FC<Props> = ({ order }) => {
           <span>
             {order.items?.length} {itemsLabel}
           </span>
-          {order.amount && (
+          {typeof order.amount === 'number' && order.amount > 0 ? (
             <>
               <span>•</span>
               <Price as="span" amount={order.amount} currencyCode={order.currency ?? undefined} />
             </>
+          ) : (
+            <span>Amount unavailable</span>
           )}
         </p>
       </div>
 
-      <Button variant="outline" asChild className="self-start sm:self-auto">
+      <Button variant="outline" asChild className="self-start sm:self-auto uppercase px-4">
         <Link href={`/orders/${order.id}`}>View Order</Link>
       </Button>
     </div>

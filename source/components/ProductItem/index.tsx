@@ -51,8 +51,11 @@ export const ProductItem: React.FC<Props> = ({ product, style = 'default', quant
     }
   }
 
+  console.log(product)
   const itemPrice = getPriceWithCurrencyCode(product, currency.code)
   const itemURL = `/products/${product.slug}${variant ? `?variant=${variant.id}` : ''}`
+
+  console.log(itemPrice, quantity)
 
   return (
     <div className="flex items-center gap-4">

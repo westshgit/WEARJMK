@@ -8,8 +8,7 @@ import { PaymentAdapter, PaymentAdapterClient } from '@payloadcms/plugin-ecommer
 
 /**
  * Fields stored on the transactions collection for the Paystack payment
- * method. Mirrors Stripe's `customerID` + `paymentIntentID` group, but holds
- * the Paystack `reference` and `accessCode`.
+ * method. These allow a pending payment to be resumed safely.
  */
 const buildPaystackGroup = (args: PaystackAdapterArgs): GroupField => {
   const { groupOverrides } = args
@@ -20,11 +19,21 @@ const buildPaystackGroup = (args: PaystackAdapterArgs): GroupField => {
       type: 'text',
       label: 'Paystack Reference',
       required: true,
+      index: true,
+      unique: true,
     },
     {
       name: 'accessCode',
       type: 'text',
       label: 'Paystack Access Code',
+    },
+    {
+      name: 'authorizationUrl',
+      type: 'text',
+      label: 'Paystack Authorization URL',
+      admin: {
+        readOnly: true,
+      },
     },
   ] as const
 
@@ -77,16 +86,22 @@ const buildPaystackGroup = (args: PaystackAdapterArgs): GroupField => {
  * ```
  */
 export const paystackAdapter = (args: PaystackAdapterArgs): PaymentAdapter => {
-  const { secretKey, apiBase, webhooks } = args
+  const { apiBase, callbackUrl, referencePrefix, requestTimeoutMs, secretKey, webhooks } = args
   const label = args.label || 'Paystack'
 
   return {
     name: 'paystack',
     label,
     group: buildPaystackGroup(args),
-    initiatePayment: initiatePayment({ secretKey, apiBase }),
-    confirmOrder: confirmOrder({ secretKey, apiBase }),
-    endpoints: [webhooksEndpoint({ secretKey, webhooks })],
+    initiatePayment: initiatePayment({
+      apiBase,
+      callbackUrl,
+      referencePrefix,
+      requestTimeoutMs,
+      secretKey,
+    }),
+    confirmOrder: confirmOrder({ apiBase, requestTimeoutMs, secretKey }),
+    endpoints: [webhooksEndpoint({ apiBase, requestTimeoutMs, secretKey, webhooks })],
   }
 }
 

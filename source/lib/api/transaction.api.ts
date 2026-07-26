@@ -2,24 +2,24 @@
 
 import { Transaction } from '@/payload-types'
 import { getPayloadAPI, syntheticServerRequest } from './shared'
-import { ActionResult } from '../shared'
 
 export async function getUserTransactionByCartId(cartId: number, email: string): Promise<Transaction | null> {
   const payload = await getPayloadAPI()
+  const req = await syntheticServerRequest()
 
   // Guard: has this cart already been paid/completed, or does this user
   // already have an active transaction against it?
   const existingTransaction = await payload.find({
-    collection: 'transactions', // TODO: your actual collection slug
+    collection: 'transactions',
     where: {
       and: [
         { cart: { equals: cartId } },
-        { user: { equals: email } }, // TODO: adjust to however you scope transaction -> user
-        { status: { in: ['paid', 'completed', 'pending'] } },
+        req.user ? { customer: { equals: req.user.id } } : { customerEmail: { equals: email } },
+        { status: { in: ['pending', 'succeeded'] } },
       ],
     },
     limit: 1,
-    req: await syntheticServerRequest(),
+    req,
   })
 
   return existingTransaction.docs[0]

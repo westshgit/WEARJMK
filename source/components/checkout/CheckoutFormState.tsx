@@ -1,7 +1,7 @@
 // Thin shape TanStack Form actually needs to manage state for.
 
-import { initializePayment, InitializePaymentArgs } from '@/lib/api/payment.api'
-import { Address, Cart, User } from '@/payload-types'
+import { initializePayment, type InitializePaymentArgs } from '@/lib/api/payment.api'
+import type { Address, Cart, User } from '@/payload-types'
 import { applyServerFieldErrors, useServerActionWithState } from '@/utilities/useServerActionWithState'
 import { useAddresses } from '@payloadcms/plugin-ecommerce/client/react'
 import { toast } from '@payloadcms/ui'
@@ -44,10 +44,9 @@ export function useCheckoutFormState({ user, cart }: { user?: User; cart: Cart }
     action: (args) => initializePayment(args as InitializePaymentArgs),
     onSuccess: (result) => {
       toast.success('Redirecting you to payment...')
-      console.log('Payment initialized successfully:', result)
+      window.location.assign(result.data.authorizationUrl)
     },
     onError: (result) => {
-      console.error('Error initializing payment:', result)
       if (result.formError) toast.error(result.formError)
 
       if (result.fieldErrors) {
