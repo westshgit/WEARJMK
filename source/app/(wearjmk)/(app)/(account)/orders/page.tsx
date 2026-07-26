@@ -14,7 +14,7 @@ export default async function Orders() {
     redirect(`/login?warning=${encodeURIComponent('Please login to access your orders.')}`)
   }
 
-  const orders: Order[] = await getOrdersForUser({ user })
+  const orders: Order[] = await getOrdersForUser({ user, pagination: false, limit: 0, where: { customer: { equals: user?.id } } })
 
   return (
     <div className="border p-8 rounded-lg bg-primary-foreground w-full">

@@ -16,7 +16,7 @@ export default async function AccountPage() {
     redirect(`/login?warning=${encodeURIComponent('Please login to access your account settings.')}`)
   }
 
-  const orders = await getOrdersForUser({ user })
+  const orders = await getOrdersForUser({ limit: 5, user: user, where: { customer: { equals: user?.id } } })
 
   return (
     <>
@@ -47,7 +47,7 @@ export default async function AccountPage() {
           </ul>
         </Condition>
 
-        <Button asChild variant="default">
+        <Button asChild variant="default" className="uppercase">
           <Link href="/orders">View all orders</Link>
         </Button>
       </div>

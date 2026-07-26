@@ -1,3 +1,5 @@
+'server-only'
+
 import { z } from 'zod'
 import path from 'node:path'
 import { existsSync } from 'node:fs'
@@ -59,3 +61,4 @@ if (!_Env.success) {
 }
 
 export const Env = _Env.data
+export const isDev = Env.NODE_ENV === 'development'

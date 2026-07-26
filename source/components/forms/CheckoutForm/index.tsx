@@ -86,7 +86,6 @@ export const CheckoutForm: React.FC<Props> = ({ customerEmail, billingAddress, s
                 router.push(redirectUrl)
               }
             } catch (err) {
-              console.log({ err })
               const msg = err instanceof Error ? err.message : 'Something went wrong.'
               setError(`Error while confirming order: ${msg}`)
               setIsLoading(false)

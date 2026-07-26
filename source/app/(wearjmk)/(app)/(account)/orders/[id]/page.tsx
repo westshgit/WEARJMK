@@ -12,7 +12,7 @@ import { ProductItem } from '@/components/ProductItem'
 import { OrderStatus } from '@/components/OrderStatus'
 import { AddressItem } from '@/components/addresses/AddressItem'
 import { getUserServer } from '@/lib/api'
-import { getPayloadAPI } from '@/lib/api/shared'
+import { getOrdersForUser } from '@/lib/api/order.api'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,110 +22,63 @@ type PageProps = {
 }
 
 export default async function Order({ params, searchParams }: PageProps) {
-  const { user } = await getUserServer()
-  const payload = await getPayloadAPI()
-
   const { id } = await params
   const { email = '', accessToken = '' } = await searchParams
 
-  let order: Order | null = null
-
-  // TODO:
-  // remove this api to the lib/api/order.api.ts file and import it here
-  try {
-    const {
-      docs: [orderResult],
-    } = await payload.find({
-      collection: 'orders',
-      user,
-      overrideAccess: !Boolean(user),
-      depth: 3,
-      where: {
-        and: [
-          {
-            id: {
-              equals: id,
-            },
+  const { user } = await getUserServer()
+  const orders = await getOrdersForUser({
+    user,
+    depth: 2,
+    where: {
+      and: [
+        {
+          id: {
+            equals: id,
           },
-          ...(user
-            ? [
-                {
-                  customer: {
-                    equals: user.id,
-                  },
-                },
-              ]
-            : [
-                {
-                  accessToken: {
-                    equals: accessToken,
-                  },
-                },
-                ...(email
-                  ? [
-                      {
-                        customerEmail: {
-                          equals: email,
-                        },
-                      },
-                    ]
-                  : []),
-              ]),
-        ],
+        },
+      ],
+      ...(user ? { customer: { equals: user?.id } } : { accessToken: { equals: accessToken }, ...(email ? { customerEmail: { equals: email } } : {}) }),
+    },
+    select: {
+      amount: true,
+      currency: true,
+      items: {
+        product: true,
+        variant: true,
+        quantity: true,
+        id: true,
       },
-      select: {
-        amount: true,
-        currency: true,
-        items: true,
-        customerEmail: true,
-        customer: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        shippingAddress: true,
-      },
-    })
+      customerEmail: true,
+      transactions: true,
+      customer: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
+      shippingAddress: true,
+    },
+  })
 
-    const canAccessAsGuest = !user && Boolean(accessToken) && Boolean(orderResult)
-    const canAccessAsUser =
-      user && orderResult && orderResult.customer && (typeof orderResult.customer === 'object' ? orderResult.customer.id : orderResult.customer) === user.id
-
-    if (orderResult && (canAccessAsGuest || canAccessAsUser)) {
-      order = orderResult
-
-      if (typeof order.amount !== 'number' || order.amount <= 0) {
-        const transactionResult = await payload.find({
-          collection: 'transactions',
-          limit: 1,
-          overrideAccess: true,
-          select: {
-            amount: true,
-            currency: true,
-          },
-          sort: '-createdAt',
-          where: {
-            and: [{ order: { equals: order.id } }, { status: { equals: 'succeeded' } }, { amount: { greater_than: 0 } }],
-          },
-        })
-        const transaction = transactionResult.docs[0] as Transaction | undefined
-
-        if (transaction?.amount) {
-          order = {
-            ...order,
-            amount: transaction.amount,
-            currency: transaction.currency ?? order.currency,
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error(error)
+  if (!orders || !Array.isArray(orders) || orders.length === 0) {
+    return notFound()
   }
 
-  console.dir(order, { depth: 5 })
+  const firstOrder = orders[0]
 
-  if (!order) {
-    notFound()
+  // W ehave produce but we can't see suff like priceInNgn coould it be that it's not saved
+  console.dir(firstOrder, {
+    depth: 5,
+  })
+
+  const canAccessAsGuest = !user && email && accessToken && firstOrder && firstOrder.customerEmail && firstOrder.customerEmail === email
+  const canAccessAsUser =
+    user && firstOrder && firstOrder.customer && (typeof firstOrder.customer === 'object' ? firstOrder.customer.id : firstOrder.customer) === user.id
+
+  if (!canAccessAsGuest && !canAccessAsUser) {
+    return notFound()
+  }
+
+  if (orders.length > 1) {
+    console.warn(`User has multiple orders. Displaying the first one. Order IDs: ${orders.map((o) => o.id).join(', ')}`)
   }
 
   return (
@@ -133,7 +86,7 @@ export default async function Order({ params, searchParams }: PageProps) {
       <div className="flex gap-8 justify-between items-center mb-6">
         {user ? (
           <div className="flex gap-4">
-            <Button asChild variant="ghost" className="uppercase">
+            <Button asChild variant="ghost" className="uppercase font-mono text-xl">
               <Link href="/orders">
                 <ChevronLeftIcon />
                 All orders
@@ -145,7 +98,7 @@ export default async function Order({ params, searchParams }: PageProps) {
         )}
 
         <h1 className="text-sm uppercase font-mono px-2 bg-primary/10 rounded tracking-[0.07em]">
-          <span className="">{`Order #${order.id}`}</span>
+          <span className="">{`Order #${firstOrder.id}`}</span>
         </h1>
       </div>
 
@@ -154,32 +107,32 @@ export default async function Order({ params, searchParams }: PageProps) {
           <div className="">
             <p className="font-mono uppercase text-primary/50 mb-1 text-sm">Order Date</p>
             <p className="text-lg">
-              <time dateTime={order.createdAt}>{formatDateTime({ date: order.createdAt, format: 'MMMM dd, yyyy' })}</time>
+              <time dateTime={firstOrder.createdAt}>{formatDateTime({ date: firstOrder.createdAt, format: 'MMMM dd, yyyy' })}</time>
             </p>
           </div>
 
           <div className="">
             <p className="font-mono uppercase text-primary/50 mb-1 text-sm">Total</p>
-            {typeof order.amount === 'number' && order.amount > 0 ? (
-              <Price className="text-lg" amount={order.amount} currencyCode={order.currency ?? undefined} />
+            {typeof firstOrder.amount === 'number' && firstOrder.amount > 0 ? (
+              <Price className="text-lg" amount={firstOrder.amount} currencyCode={firstOrder.currency ?? undefined} />
             ) : (
               <p className="text-sm text-muted-foreground">Amount unavailable</p>
             )}
           </div>
 
-          {order.status && (
+          {firstOrder.status && (
             <div className="grow max-w-1/3">
               <p className="font-mono uppercase text-primary/50 mb-1 text-sm">Status</p>
-              <OrderStatus className="text-sm" status={order.status} />
+              <OrderStatus className="text-sm" status={firstOrder.status} />
             </div>
           )}
         </div>
 
-        {order.items && (
+        {firstOrder.items && (
           <div>
             <h2 className="font-mono text-primary/50 mb-4 uppercase text-sm">Items</h2>
             <ul className="flex flex-col gap-6">
-              {order.items?.map((item, index) => {
+              {firstOrder.items?.map((item, index) => {
                 if (typeof item.product === 'string') {
                   return null
                 }
@@ -200,11 +153,11 @@ export default async function Order({ params, searchParams }: PageProps) {
           </div>
         )}
 
-        {order.shippingAddress && (
+        {firstOrder.shippingAddress && (
           <div>
             <h2 className="font-mono text-primary/50 mb-4 uppercase text-sm">Shipping Address</h2>
             {/* @ts-expect-error - some kind of type hell */}
-            <AddressItem address={order.shippingAddress} hideActions />
+            <AddressItem address={firstOrder.shippingAddress} hideActions />
           </div>
         )}
       </div>

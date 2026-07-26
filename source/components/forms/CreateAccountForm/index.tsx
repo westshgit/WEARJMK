@@ -27,7 +27,6 @@ export const CreateAccountForm: React.FC = () => {
   const { runAction, isPending } = useServerActionWithState({
     action: createUserAccount,
     onSuccess: (result) => {
-      console.log('Account created successfully:', result.data)
       // Redirect to the specified page after account creation, if applicable
       if (redirect) {
         router.push(redirect)

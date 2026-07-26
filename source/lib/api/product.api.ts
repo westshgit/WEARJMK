@@ -169,3 +169,57 @@ export const revalidateProductDelete = genericCollectionChangeHook<CollectionAft
     shouldRevalidateHook: ({ doc }) => doc._status === 'published' && Boolean(doc.slug),
   },
 ])
+
+// payload.find({
+//     collection: 'products',
+//     draft: false,
+//     overrideAccess: false,
+//     select: {
+//       title: true,
+//       slug: true,
+//       gallery: true,
+//       categories: true,
+//       priceInNGN: true,
+//     },
+//     ...(sort ? { sort } : { sort: 'title' }),
+//     ...(searchValue || category
+//       ? {
+//           where: {
+//             and: [
+//               {
+//                 _status: {
+//                   equals: 'published',
+//                 },
+//               },
+//               ...(searchValue
+//                 ? [
+//                     {
+//                       or: [
+//                         {
+//                           title: {
+//                             like: searchValue,
+//                           },
+//                         },
+//                         {
+//                           description: {
+//                             like: searchValue,
+//                           },
+//                         },
+//                       ],
+//                     },
+//                   ]
+//                 : []),
+//               ...(category
+//                 ? [
+//                     {
+//                       categories: {
+//                         contains: category,
+//                       },
+//                     },
+//                   ]
+//                 : []),
+//             ],
+//           },
+//         }
+//       : {}),
+//   })

@@ -5,6 +5,7 @@ import { SanitizedPermissions } from 'payload'
 import { headers } from 'next/headers'
 import { User } from '@/payload-types'
 import { getPayloadAPI } from './shared'
+import { Env } from '../env'
 
 export const getUserServer = cache(async (): Promise<{ user: User | null; permissions: SanitizedPermissions | null }> => {
   try {
@@ -17,7 +18,11 @@ export const getUserServer = cache(async (): Promise<{ user: User | null; permis
       user,
       permissions,
     }
-  } catch (_) {
+  } catch (error) {
+    if (Env.NODE_ENV === 'development') {
+      console.error('Error fetching user:', error)
+    }
+
     return {
       user: null,
       permissions: null,

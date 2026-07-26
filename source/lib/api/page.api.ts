@@ -1,61 +1,90 @@
 import { draftMode } from 'next/headers'
-import { getPayload } from 'payload'
 import { unstable_cache } from 'next/cache'
-import configPromise from '@payload-config'
-import { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
-import { genericCollectionChangeHook } from '@/lib/api/shared'
-import { Page } from '@/payload-types'
+import type { BasePayload, CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
+import { genericCollectionChangeHook, getPayloadAPI } from '@/lib/api/shared'
+import type { Page, PagesSelect } from '@/payload-types'
 
-async function getPublishedPageBySlug(slug: string) {
-  const payload = await getPayload({ config: configPromise })
+type FindPagesOptions = Parameters<BasePayload['find']>[0]
 
-  try {
-    const result = await payload.find({
-      collection: 'pages',
-      draft: false,
-      limit: 1,
-      overrideAccess: false,
-      pagination: false,
-      where: {
-        and: [{ slug: { equals: slug } }, { _status: { equals: 'published' } }],
-      },
-    })
+type _GetPagesArgs = Omit<FindPagesOptions, 'select'> & {
+  select?: PagesSelect<false> | PagesSelect<true>
+}
 
-    return result.docs?.[0] || null
-  } catch (error) {
-    console.error('Error fetching published page by slug:', error)
-    return null
+export type GetPagesArgs = Partial<Omit<_GetPagesArgs, 'collection' | 'draft' | 'overrideAccess' | 'req' | 'user'>>
+
+type PageCacheConfig = {
+  keyParts: string[]
+  tags: string[]
+}
+
+const allPagesCacheConfig: PageCacheConfig = {
+  keyParts: ['pages'],
+  tags: ['pages'],
+}
+
+function getPublishedPageWhere(where: GetPagesArgs['where']) {
+  return {
+    and: [{ _status: { equals: 'published' } }, ...(where ? [where] : [])],
   }
 }
 
-export async function queryPageBySlug({ slug }: { slug: string }) {
+async function findPages({ where, ...rest }: GetPagesArgs, draft: boolean) {
+  const payload = await getPayloadAPI()
+
+  return payload.find({
+    collection: 'pages',
+    draft,
+    overrideAccess: draft,
+    ...rest,
+    where: draft ? where : getPublishedPageWhere(where),
+  })
+}
+
+function getCachedPublishedPages(args: GetPagesArgs, cacheConfig: PageCacheConfig) {
+  const cachedQuery = unstable_cache(
+    (findArgs: GetPagesArgs) => findPages(findArgs, false),
+    cacheConfig.keyParts,
+    {
+      tags: cacheConfig.tags,
+      revalidate: false,
+    },
+  )
+
+  return cachedQuery(args)
+}
+
+async function getPages(args: GetPagesArgs, cacheConfig: PageCacheConfig) {
   const { isEnabled: draft } = await draftMode()
 
-  // Draft/preview mode: always hit the DB directly, never cache.
-  // Editors need to see unpublished changes immediately.
-  if (draft) {
-    const payload = await getPayload({ config: configPromise })
+  if (draft) return findPages(args, true)
 
-    const result = await payload.find({
-      collection: 'pages',
-      draft: true,
-      limit: 1,
-      overrideAccess: true,
-      pagination: false,
-      where: { and: [{ slug: { equals: slug } }] },
-    })
-
-    return result.docs?.[0] || null
-  }
-
-  // Published path: cacheable, keyed by slug.
-  const cachedQuery = unstable_cache(() => getPublishedPageBySlug(slug), ['pages-by-slug', slug], {
-    tags: [`pages_${slug}`, 'pages'],
-    revalidate: false, // rely on tag-based revalidation, not time
-  })
-
-  return cachedQuery()
+  return getCachedPublishedPages(args, cacheConfig)
 }
+
+export async function getPageAPI(args: GetPagesArgs = {}) {
+  return getPages(args, allPagesCacheConfig)
+}
+
+export async function queryPageBySlug({ slug }: { slug: string }): Promise<Page | null> {
+  const { docs } = await getPages(
+    {
+      limit: 1,
+      pagination: false,
+      where: {
+        slug: {
+          equals: slug,
+        },
+      },
+    },
+    {
+      keyParts: ['pages-by-slug', slug],
+      tags: [`pages_${slug}`],
+    },
+  )
+
+  return docs[0] ?? null
+}
+
 export const revalidatePage = genericCollectionChangeHook<CollectionAfterChangeHook<Page>>([
   {
     getCacheKey: () => 'pages',

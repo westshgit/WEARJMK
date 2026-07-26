@@ -1,13 +1,10 @@
 'use client'
 
 import { Media } from '@/components/Media'
-import { OrderStatus } from '@/components/OrderStatus'
 import { Price } from '@/components/Price'
-import { Button } from '@/components/ui/button'
-import { Media as MediaType, Order, Product, Variant } from '@/payload-types'
+import { Product, Variant } from '@/payload-types'
 import { getPriceWithCurrencyCode } from '@/utilities'
 import { useCurrency } from '@payloadcms/plugin-ecommerce/client/react'
-import { formatDateTime } from '@/utilities/formatDateTime'
 import Link from 'next/link'
 
 type Props = {
@@ -51,11 +48,10 @@ export const ProductItem: React.FC<Props> = ({ product, style = 'default', quant
     }
   }
 
-  console.log(product)
-  const itemPrice = getPriceWithCurrencyCode(product, currency.code)
+  const selectedCurrencyCode = currencyCode ?? currency.code
+  const priceSource = isVariant ? variant : product
+  const itemPrice = getPriceWithCurrencyCode(priceSource, selectedCurrencyCode)
   const itemURL = `/products/${product.slug}${variant ? `?variant=${variant.id}` : ''}`
-
-  console.log(itemPrice, quantity)
 
   return (
     <div className="flex items-center gap-4">
@@ -67,7 +63,9 @@ export const ProductItem: React.FC<Props> = ({ product, style = 'default', quant
       <div className="flex grow justify-between items-center">
         <div className="flex flex-col gap-1">
           <p className="font-medium text-lg">
-            <Link href={itemURL}>{title}</Link>
+            <Link href={itemURL} className="font-mono! uppercase text-base!">
+              {title}
+            </Link>
           </p>
           {variant && (
             <p className="text-sm font-mono text-primary/50 tracking-widest">
@@ -87,8 +85,8 @@ export const ProductItem: React.FC<Props> = ({ product, style = 'default', quant
 
         {itemPrice && quantity && (
           <div className="text-right">
-            <p className="font-medium text-lg">Subtotal</p>
-            <Price className="font-mono text-primary/50 text-sm" amount={itemPrice * quantity} currencyCode={currencyCode} />
+            <p className="font-medium text-xs font-mono! uppercase">Subtotal</p>
+            <Price className="font-mono text-primary/50 text-sm" amount={itemPrice * quantity} currencyCode={selectedCurrencyCode} />
           </div>
         )}
       </div>

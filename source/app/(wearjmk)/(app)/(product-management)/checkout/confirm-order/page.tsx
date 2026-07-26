@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
-import React, { Fragment } from 'react'
 import { Suspense } from 'react'
 import { ConfirmOrder } from '@/components/checkout/ConfirmOrder'
 

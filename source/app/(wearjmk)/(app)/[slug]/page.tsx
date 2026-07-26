@@ -2,36 +2,19 @@ import type { Metadata } from 'next'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { generateMeta } from '@/utilities/generateMeta'
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
 
 import { notFound } from 'next/navigation'
-import { queryPageBySlug } from '@/lib/api/page.api'
+import { getPageAPI, queryPageBySlug } from '@/lib/api/page.api'
 import type { Page } from '@/payload-types'
 
-async function getPages() {
-  try {
-    const payload = await getPayload({ config: configPromise })
-    const pages = await payload.find({
-      collection: 'pages',
-      draft: false,
-      limit: 1000,
-      overrideAccess: false,
-      pagination: false,
-      select: {
-        slug: true,
-      },
-    })
-
-    return pages
-  } catch (error) {
-    console.error('Error fetching pages:', error)
-    return { docs: [] } // Return an empty array if there's an error
-  }
-}
-
 export async function generateStaticParams() {
-  const pages = await getPages()
+  const pages = await getPageAPI({
+    limit: 1000,
+    pagination: false,
+    select: {
+      slug: true,
+    },
+  })
   const params = pages.docs
     ?.filter((doc) => {
       return doc.slug !== 'home'
@@ -51,13 +34,11 @@ type Args = {
 
 export default async function Page({ params }: Args) {
   const { slug = 'home' } = await params
-  const url = '/' + slug
 
-  let page = await queryPageBySlug({
+  const page = await queryPageBySlug({
     slug,
   })
   if (!page) {
-    console.log('Try to fetch page with slug, ', slug)
     return notFound()
   }
   const { layout } = page

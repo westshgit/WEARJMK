@@ -20,6 +20,7 @@ import { Pages } from '@/collections/Pages'
 import { Users } from '@/collections/Users'
 import { Footer, Social } from '@/globals'
 import { plugins } from './plugins'
+import sharp from 'sharp'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -35,7 +36,7 @@ export default buildConfig({
       // beforeDashboard: ['@/components/BeforeDashboard#BeforeDashboard'],
     },
     meta: {
-      titleSuffix: ' | Wear JMK',
+      titleSuffix: ' | WEAR JMK',
     },
     user: Users.slug,
   },
@@ -91,5 +92,5 @@ export default buildConfig({
   // Sharp is now an optional dependency -
   // if you want to resize images, crop, set focal point, etc.
   // make sure to install it and pass it to the config.
-  // sharp,
+  sharp,
 })

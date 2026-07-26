@@ -1,6 +1,6 @@
 import type { Product, Variant } from '@/payload-types'
 
-type Price = Pick<Product, 'priceInNGN'>
+type Price = Pick<Product | Variant, 'priceInNGN'>
 
 export function getPriceWithCurrencyCode(product: Price, code: string): number {
   const priceField = `priceIn${code}` as const

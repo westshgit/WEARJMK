@@ -6,7 +6,6 @@ import { FooterMenu } from '@/components/Footer/menu'
 import { SocialLink } from '@/components/SocialLink'
 import { SITE_NAME, SUPPORT_EMAIL, SUPPORT_WHATSAPP } from '@/lib/client.env'
 import { ThemeModeSelector } from '@/providers'
-import { useAuth } from '@payloadcms/ui'
 import { Clock, Map } from 'lucide-react'
 import { motion } from 'motion/react'
 import Link from 'next/link'
@@ -43,8 +42,6 @@ interface Props {
 }
 
 export function FooterClient({ navItems, socialLinks, children, locations }: Props) {
-  const { user } = useAuth()
-
   const now = new Date()
   const currentYear = now.getFullYear()
   const copyrightDate = 2023 + (currentYear > 2023 ? `-${currentYear}` : '')
@@ -103,16 +100,16 @@ export function FooterClient({ navItems, socialLinks, children, locations }: Pro
                                 </DialogTrigger>
                                 <DialogContent>
                                   <DialogHeader>
-                                    <DialogTitle>Business hours for {name}</DialogTitle>
+                                    <DialogTitle className="uppercase font-black!">Business hours for {name}</DialogTitle>
                                     <DialogDescription>{getTodayStatusMessage(hours as DayHours[])}</DialogDescription>
                                   </DialogHeader>
 
                                   <Table className="mt-2">
                                     <TableHeader>
                                       <TableRow>
-                                        <TableHead>Day</TableHead>
-                                        <TableHead>Open</TableHead>
-                                        <TableHead>Close</TableHead>
+                                        <TableHead className="uppercase font-semibold! font-mono">Day</TableHead>
+                                        <TableHead className="uppercase font-semibold! font-mono">Open</TableHead>
+                                        <TableHead className="uppercase font-semibold! font-mono">Close</TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
