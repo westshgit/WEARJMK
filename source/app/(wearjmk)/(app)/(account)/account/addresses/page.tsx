@@ -5,7 +5,7 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { redirect } from 'next/navigation'
 import { AddressListing } from '@/components/addresses/AddressListing'
 import { CreateAddressModal } from '@/components/addresses/CreateAddressModal'
-import { getUserServer } from '@/lib/api'
+import { getUserServer } from '@/lib/api/user.api'
 
 export default async function AddressesPage() {
   const user = await getUserServer()

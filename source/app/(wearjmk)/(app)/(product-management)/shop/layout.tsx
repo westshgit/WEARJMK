@@ -4,7 +4,7 @@ import { sorting } from '@/lib/constants'
 import { Search } from '@/components/Search'
 import React, { Suspense } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { RiArrowRightLine, RiMoreLine } from '@remixicon/react'
+import { RiMoreLine } from '@remixicon/react'
 import { Button } from '@/components/ui/button'
 
 export default function ShopLayout({ children }: { children: React.ReactNode }) {

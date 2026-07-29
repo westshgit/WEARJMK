@@ -4,6 +4,7 @@ import { getCachedGlobal } from '@/utilities/getGlobals'
 
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { FooterClient } from './index.client'
+import { Suspense } from 'react'
 
 export async function Footer() {
   let footer: Footer = await getCachedGlobal('footer', 2)()
@@ -14,12 +15,14 @@ export async function Footer() {
   const socialLinks = social.socialLinks || []
 
   return (
-    <FooterClient socialLinks={socialLinks} navItems={navItems} locations={locations}>
-      {discount ? (
-        <div className="**:data-[slot=carousel-item]:lg:w-1/2!">
-          <RenderBlocks blocks={discount?.layout} />
-        </div>
-      ) : null}
-    </FooterClient>
+    <Suspense fallback={null}>
+      <FooterClient socialLinks={socialLinks} navItems={navItems} locations={locations}>
+        {discount ? (
+          <div className="**:data-[slot=carousel-item]:lg:w-1/2!">
+            <RenderBlocks blocks={discount?.layout} />
+          </div>
+        ) : null}
+      </FooterClient>
+    </Suspense>
   )
 }

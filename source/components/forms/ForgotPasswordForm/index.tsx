@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { forgotPasswordSchema } from '@/lib/schema/authentication'
 import { applyServerFieldErrors, useServerActionWithState } from '@/utilities'
 import { toast } from 'sonner'
-import { forgotPassword } from '@/lib/api'
+import { forgotPassword } from '@/lib/api/authentication'
 import { fieldIsErrorAfterTouched } from '../shared.api'
 import { cn } from '@/utilities/cn'
 

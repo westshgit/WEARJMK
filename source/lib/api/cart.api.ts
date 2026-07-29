@@ -1,43 +1,53 @@
-import { Cart } from '@/payload-types'
-import { CacheKey, genericCollectionChangeHook, getPayloadAPI } from './shared'
-import { unstable_cache } from 'next/cache'
-import { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
+import type { BasePayload } from 'payload'
 
-async function _getCartById(cartId: number): Promise<Cart | null> {
+import type { Cart, CartsSelect } from '@/payload-types'
+import { getPayloadAPI } from './shared'
+
+type FindCartsOptions = Parameters<BasePayload['find']>[0]
+
+type _GetCartsArgs = Omit<FindCartsOptions, 'select'> & {
+  select?: CartsSelect<false> | CartsSelect<true>
+}
+
+export type GetCartsArgs = Partial<Omit<_GetCartsArgs, 'collection' | 'overrideAccess' | 'req' | 'user'>>
+
+export async function getCartAPI({ select, ...rest }: GetCartsArgs): Promise<Cart[] | null> {
   const payload = await getPayloadAPI()
 
-  const cart = await payload.findByID({
+  const findArgs = {
     collection: 'carts',
-    id: cartId.toString(),
+    overrideAccess: true,
+    ...(select ? { select } : {}),
+    ...rest,
+  } as _GetCartsArgs
+
+  try {
+    const { docs } = await payload.find(findArgs)
+    return docs as Cart[]
+  } catch (error) {
+    console.error('Error fetching carts:', error)
+    return null
+  }
+}
+
+export async function getCartByIdAPI(cartId: number): Promise<Cart | null> {
+  const getCartById = await getCartAPI({
     depth: 2,
+    limit: 1,
+    pagination: false,
+    where: {
+      id: {
+        equals: cartId,
+      },
+    },
   })
 
-  return cart as Cart | null
+  if (!getCartById || getCartById.length === 0) {
+    return null
+  }
+
+  const cart = getCartById[0] as Cart | undefined
+  return cart ?? null
 }
 
-export async function getCartById(cartId: number) {
-  return unstable_cache(() => _getCartById(cartId), ['cart', cartId.toString()], {
-    tags: [getCartByIdCacheKey(cartId)],
-    revalidate: false,
-  })()
-}
-
-export const getCartByIdCacheKey: CacheKey<number | string> = (args) => `cart-${args}`
-
-export const revalidateCart = genericCollectionChangeHook<CollectionAfterChangeHook<Cart>>([
-  {
-    getCacheKey: ({ doc }) => getCartByIdCacheKey(doc.id),
-    tagOrPath: {
-      tag: 'tag',
-    },
-  },
-])
-
-export const revalidateCartDelete = genericCollectionChangeHook<CollectionAfterDeleteHook<Cart>>([
-  {
-    getCacheKey: ({ doc }) => getCartByIdCacheKey(doc.id),
-    tagOrPath: {
-      tag: 'tag',
-    },
-  },
-])
+export const getCartById = getCartByIdAPI

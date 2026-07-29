@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { CreateAccountForm } from '@/components/forms/CreateAccountForm'
 import { redirect } from 'next/navigation'
-import { getUserServer } from '@/lib/api'
+import { getUserServer } from '@/lib/api/user.api'
 
 export default async function CreateAccount() {
   const { user } = await getUserServer()

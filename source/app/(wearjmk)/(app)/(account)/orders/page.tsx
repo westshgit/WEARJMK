@@ -4,8 +4,8 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { OrderItem } from '@/components/OrderItem'
 import { redirect } from 'next/navigation'
 import { getUserServer } from '@/lib/api/user.api'
-import { getOrdersForUser } from '@/lib/api/order.api'
 import Condition from '@/components/Condition'
+import { getOrdersAPI } from '@/lib/api/order.api'
 
 export default async function Orders() {
   const { user } = await getUserServer()
@@ -14,7 +14,7 @@ export default async function Orders() {
     redirect(`/login?warning=${encodeURIComponent('Please login to access your orders.')}`)
   }
 
-  const orders: Order[] = await getOrdersForUser({ user, pagination: false, limit: 0, where: { customer: { equals: user?.id } } })
+  const orders: Order[] = await getOrdersAPI({ user, pagination: false, limit: 0, where: { customer: { equals: user?.id } } })
 
   return (
     <div className="border p-8 rounded-lg bg-primary-foreground w-full">

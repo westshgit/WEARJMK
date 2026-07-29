@@ -1,9 +1,8 @@
-import crypto from 'crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import type { Endpoint, PayloadRequest } from 'payload'
 
-import { createPaystackClient } from '../client'
-import { fulfillPaystackOrder } from '../fulfillOrder'
 import type { PaystackWebhookEvent, PaystackWebhookHandlers } from '../types'
+import { verifyPaystackPayment } from '../verifyPayment'
 
 type Props = {
   apiBase: string
@@ -13,16 +12,31 @@ type Props = {
 }
 
 const isAuthenticPaystackRequest = (rawBody: string, signatureHeader: string | null, secretKey: string): boolean => {
-  if (!signatureHeader) return false
+  if (!signatureHeader || !/^[\da-f]{128}$/i.test(signatureHeader)) return false
 
-  const digest = crypto.createHmac('sha512', secretKey).update(rawBody).digest('hex')
-  if (digest.length !== signatureHeader.length) return false
+  const digest = createHmac('sha512', secretKey).update(rawBody).digest()
+  const signature = Buffer.from(signatureHeader, 'hex')
+  if (digest.length !== signature.length) return false
 
   try {
-    return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signatureHeader))
+    return timingSafeEqual(digest, signature)
   } catch {
     return false
   }
+}
+
+function isPaystackWebhookEvent(value: unknown): value is PaystackWebhookEvent {
+  if (typeof value !== 'object' || value === null) return false
+
+  const event = value as Record<string, unknown>
+  const data = event.data
+
+  return (
+    typeof event.event === 'string' &&
+    typeof data === 'object' &&
+    data !== null &&
+    typeof (data as Record<string, unknown>).reference === 'string'
+  )
 }
 
 export const webhooksEndpoint = ({ apiBase, requestTimeoutMs, secretKey, webhooks }: Props): Endpoint => {
@@ -37,7 +51,11 @@ export const webhooksEndpoint = ({ apiBase, requestTimeoutMs, secretKey, webhook
 
     let event: PaystackWebhookEvent
     try {
-      event = JSON.parse(body) as PaystackWebhookEvent
+      const parsedEvent: unknown = JSON.parse(body)
+      if (!isPaystackWebhookEvent(parsedEvent)) {
+        throw new Error('Webhook event has an invalid shape.')
+      }
+      event = parsedEvent
     } catch (error) {
       req.payload.logger.error({
         err: error,
@@ -52,16 +70,13 @@ export const webhooksEndpoint = ({ apiBase, requestTimeoutMs, secretKey, webhook
           throw new Error('Paystack webhook is missing a transaction reference')
         }
 
-        const transactionData = await createPaystackClient({
+        await verifyPaystackPayment({
           apiBase,
+          decrementInventory: true,
+          reference: event.data.reference,
+          req,
           requestTimeoutMs,
           secretKey,
-        }).verify(event.data.reference)
-
-        await fulfillPaystackOrder({
-          decrementInventory: true,
-          req,
-          transactionData,
         })
       }
 

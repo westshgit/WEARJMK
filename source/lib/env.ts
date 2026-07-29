@@ -1,5 +1,3 @@
-'server-only'
-
 import { z } from 'zod'
 import path from 'node:path'
 import { existsSync } from 'node:fs'
@@ -35,11 +33,10 @@ const schema = z.object({
   TWITTER_SITE: z.url().optional(),
   PAYLOAD_PUBLIC_SERVER_URL: z.url(),
   PREVIEW_SECRET: z.string().min(1),
-  STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
-  STRIPE_WEBHOOKS_SIGNING_SECRET: z.string().startsWith('whsec_'),
+  STRIPE_SECRET_KEY: z.string().startsWith('sk_').optional(),
+  STRIPE_WEBHOOKS_SIGNING_SECRET: z.string().startsWith('whsec_').optional(),
   PAYSTACK_SECRET_KEY: z.string().startsWith('sk_'),
   PAYSTACK_API_BASE_URL: z.url(),
-  PAYSTACK_CALLBACK_URL: z.url(),
   PAYSTACK_REFERENCE_PREFIX: z.string().regex(/^[A-Za-z0-9.=-]+$/),
   PAYSTACK_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().max(30_000).default(10_000),
 
@@ -50,7 +47,7 @@ const schema = z.object({
   NEXT_PUBLIC_SUPPORT_EMAIL: z.email(),
   NEXT_PUBLIC_SUPPORT_WHATSAPP: z.string().min(1),
   NEXT_PUBLIC_SERVER_URL: z.url(),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_'),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
   NEXT_PUBLIC_SHOWCASE_PRODUCTS_LIMITS: z.coerce.number().int().positive(),
 })
 

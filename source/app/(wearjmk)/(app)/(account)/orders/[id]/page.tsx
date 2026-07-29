@@ -1,4 +1,4 @@
-import type { Order, Transaction, Product } from '@/payload-types'
+import type { Order } from '@/payload-types'
 import type { Metadata } from 'next'
 
 import { Price } from '@/components/Price'
@@ -12,7 +12,7 @@ import { ProductItem } from '@/components/ProductItem'
 import { OrderStatus } from '@/components/OrderStatus'
 import { AddressItem } from '@/components/addresses/AddressItem'
 import { getUserServer } from '@/lib/api'
-import { getOrdersForUser } from '@/lib/api/order.api'
+import { getOrdersAPI } from '@/lib/api/order.api'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +26,7 @@ export default async function Order({ params, searchParams }: PageProps) {
   const { email = '', accessToken = '' } = await searchParams
 
   const { user } = await getUserServer()
-  const orders = await getOrdersForUser({
+  const orders = await getOrdersAPI({
     user,
     depth: 2,
     where: {
@@ -64,21 +64,12 @@ export default async function Order({ params, searchParams }: PageProps) {
 
   const firstOrder = orders[0]
 
-  // W ehave produce but we can't see suff like priceInNgn coould it be that it's not saved
-  console.dir(firstOrder, {
-    depth: 5,
-  })
-
   const canAccessAsGuest = !user && email && accessToken && firstOrder && firstOrder.customerEmail && firstOrder.customerEmail === email
   const canAccessAsUser =
     user && firstOrder && firstOrder.customer && (typeof firstOrder.customer === 'object' ? firstOrder.customer.id : firstOrder.customer) === user.id
 
   if (!canAccessAsGuest && !canAccessAsUser) {
     return notFound()
-  }
-
-  if (orders.length > 1) {
-    console.warn(`User has multiple orders. Displaying the first one. Order IDs: ${orders.map((o) => o.id).join(', ')}`)
   }
 
   return (

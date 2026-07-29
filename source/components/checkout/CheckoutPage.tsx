@@ -13,12 +13,13 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { getPriceWithCurrencyCode } from '@/utilities'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '../ui/empty'
 import { ArrowRight, CreditCard, Store } from 'lucide-react'
-import { RiHandbagLine } from '@remixicon/react'
+import { RiHandbagLine, RiRefreshLine } from '@remixicon/react'
 import Condition from '@/components/Condition'
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { useCheckoutFormState } from './CheckoutFormState'
 import LoggedInUserCheckout from './LoggedInUserCheckout'
 import GuestUserCheckout from './GuestUserCheckout'
+import { toast } from '@payloadcms/ui'
 
 export const CheckoutPage: React.FC<{ user?: User; policyBlock: PolicyBlock | undefined }> = ({ user, policyBlock }) => {
   const router = useRouter()
@@ -72,53 +73,58 @@ export const CheckoutPage: React.FC<{ user?: User; policyBlock: PolicyBlock | un
           <Condition predicate={Boolean(user)}>
             <LoggedInUserCheckout formState={formState} user={user as User} />
           </Condition>
-          <AnimatePresence>
-            <motion.div
-              initial={{
-                opacity: 0,
-                y: 12,
-              }}
-              animate={{
-                opacity: 1,
-                y: 0,
-              }}
-              exit={{
-                opacity: 0,
-                y: 12,
-              }}
-            >
-              <Button
-                type="button"
-                variant={'outline'}
-                className="self-start text-start uppercase cursor-pointer  h-16 w-full justify-between gap-2 md:max-w-md"
-                disabled={!canGoToPayment || formIsPending}
-                onClick={(e) => {
-                  e.preventDefault()
-                  void form.handleSubmit()
+          <div className="space-y-3">
+            <AnimatePresence>
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: 12,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                exit={{
+                  opacity: 0,
+                  y: 12,
                 }}
               >
-                <span className="flex items-center gap-2 tracking-tighter">
-                  <CreditCard className="size-8 shrink-0 text-muted-foreground" />
-                  {formIsPending ? 'Preparing payment...' : 'Go to payment'}
-                </span>
-                <ArrowRight className="size-4 shrink-0" />
-              </Button>
-            </motion.div>
-          </AnimatePresence>
+                <Button
+                  type="button"
+                  variant={'outline'}
+                  className="self-start text-start uppercase cursor-pointer  h-16 w-full justify-between gap-2 md:max-w-md"
+                  disabled={!canGoToPayment || formIsPending}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    void form.handleSubmit()
+                  }}
+                >
+                  <span className="flex items-center gap-2 tracking-tighter">
+                    <CreditCard className="size-8 shrink-0 text-muted-foreground" />
+                    {formIsPending ? 'Preparing payment...' : 'Go to payment'}
+                  </span>
+                  <ArrowRight className="size-4 shrink-0" />
+                </Button>
+              </motion.div>
+            </AnimatePresence>
 
-          {!paymentState?.success && paymentState?.formError && (
-            <div className="my-8">
-              <Button
-                onClick={(e) => {
-                  e.preventDefault()
-                  router.refresh()
-                }}
-                variant="default"
-              >
-                Try again
-              </Button>
-            </div>
-          )}
+            {!paymentState?.success && paymentState?.formError && (
+              <div className="my-8">
+                <Button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    router.refresh()
+                  }}
+                  variant="default"
+                  className="uppercase"
+                  size={'lg'}
+                >
+                  <RiRefreshLine />
+                  Try again
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {!cartIsEmpty && (

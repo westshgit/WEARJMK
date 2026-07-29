@@ -26,16 +26,13 @@ type FulfillPaystackOrderResult = {
 
 type CartItem = NonNullable<Transaction['items']>[number]
 type Address = NonNullable<Order['shippingAddress']>
-type OrderWithPaymentReference = Order & {
-  paymentReference?: string | null
-}
 
 function getRelationID(value: number | { id: number } | null | undefined): number | undefined {
   if (typeof value === 'number') return value
   return value?.id
 }
 
-function parseMetadataRecord(metadata: Record<string, unknown> | string | null): Record<string, unknown> {
+function parseMetadataRecord(metadata: unknown): Record<string, unknown> {
   if (typeof metadata === 'object' && metadata !== null) return metadata
   return parseJSONField<Record<string, unknown>>(metadata) ?? {}
 }
@@ -77,7 +74,7 @@ async function reconcileExistingOrder({
 
   if (order.amount === amount && order.currency === currency) return order
 
-  return (await req.payload.update({
+  return req.payload.update({
     collection: ordersSlug as 'orders',
     id: order.id,
     data: {
@@ -85,7 +82,7 @@ async function reconcileExistingOrder({
       currency,
     },
     req,
-  })) as Order
+  })
 }
 
 async function decrementInventory({
@@ -156,7 +153,7 @@ export async function fulfillPaystackOrder({
     },
   })
 
-  const transaction = transactions.docs[0] as Transaction | undefined
+  const transaction = transactions.docs[0]
   if (!transaction) {
     throw new Error('No transaction found for the provided Paystack reference')
   }
@@ -199,7 +196,7 @@ export async function fulfillPaystackOrder({
       order: await reconcileExistingOrder({
         amount: transactionData.amount,
         currency: verifiedCurrency,
-        order: existingOrder as Order,
+        order: existingOrder,
         ordersSlug,
         req,
       }),
@@ -219,7 +216,7 @@ export async function fulfillPaystackOrder({
     },
   })
 
-  const existingOrder = existingOrderResult.docs[0] as Order | undefined
+  const existingOrder = existingOrderResult.docs[0]
   if (existingOrder) {
     const reconciledOrder = await reconcileExistingOrder({
       amount: transactionData.amount,
@@ -272,11 +269,11 @@ export async function fulfillPaystackOrder({
   let order: Order
 
   try {
-    order = (await req.payload.create({
+    order = await req.payload.create({
       collection: ordersSlug as 'orders',
       data: orderData,
       req,
-    })) as Order
+    })
   } catch (error) {
     const concurrentOrderResult = await req.payload.find({
       collection: ordersSlug as 'orders',
@@ -286,7 +283,7 @@ export async function fulfillPaystackOrder({
         paymentReference: { equals: transactionData.reference },
       },
     })
-    const concurrentOrder = concurrentOrderResult.docs[0] as OrderWithPaymentReference | undefined
+    const concurrentOrder = concurrentOrderResult.docs[0]
 
     if (!concurrentOrder) throw error
 
@@ -307,12 +304,12 @@ export async function fulfillPaystackOrder({
     req,
   })
 
-  const updatedTransaction = (await req.payload.update({
+  const updatedTransaction = await req.payload.update({
     collection: transactionsSlug as 'transactions',
     id: transaction.id,
     data: { order: order.id, status: 'succeeded' },
     req,
-  })) as Transaction
+  })
 
   if (shouldDecrementInventory && created) {
     await decrementInventory({
@@ -348,7 +345,7 @@ export async function markPaystackTransactionFailed({
     },
   })
 
-  const transaction = transactions.docs[0] as Transaction | undefined
+  const transaction = transactions.docs[0]
   if (!transaction || transaction.status === 'succeeded') return
 
   await req.payload.update({

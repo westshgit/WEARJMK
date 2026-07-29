@@ -1,16 +1,12 @@
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
 import clsx from 'clsx'
 import React, { Suspense } from 'react'
 
 import { FilterList } from './filter'
 import { CategoryItem } from './Categories.client'
+import { getCategoriesWithCacheAPI } from '@/lib/api/category.api.cache'
 
 async function CategoryList() {
-  const payload = await getPayload({ config: configPromise })
-
-  const categories = await payload.find({
-    collection: 'categories',
+  const categories = await getCategoriesWithCacheAPI({
     sort: 'title',
   })
 
@@ -19,7 +15,7 @@ async function CategoryList() {
       <h3 className="text-xs mb-2 text-muted-foreground">Category</h3>
 
       <ul>
-        {categories.docs.map((category) => {
+        {categories?.map((category) => {
           return (
             <li key={category.id}>
               <CategoryItem category={category} />

@@ -1,6 +1,9 @@
+'use client'
+
 // Thin shape TanStack Form actually needs to manage state for.
 
-import { initializePayment, type InitializePaymentArgs } from '@/lib/api/payment.api'
+import { initializePayment } from '@/lib/api/payment/api'
+import type { InitializePaymentArgs } from '@/lib/api/payment/types'
 import type { Address, Cart, User } from '@/payload-types'
 import { applyServerFieldErrors, useServerActionWithState } from '@/utilities/useServerActionWithState'
 import { useAddresses } from '@payloadcms/plugin-ecommerce/client/react'
@@ -42,9 +45,15 @@ export function useCheckoutFormState({ user, cart }: { user?: User; cart: Cart }
     state: paymentState,
   } = useServerActionWithState({
     action: (args) => initializePayment(args as InitializePaymentArgs),
-    onSuccess: (result) => {
-      toast.success('Redirecting you to payment...')
-      window.location.assign(result.data.authorizationUrl)
+    onSuccess: ({ data: { message, authorizationUrl, reference } }) => {
+      toast.success('Payment initialized successfully. Redirecting to payment gateway...')
+      const valueExistsAndString = (value: unknown): value is string => typeof value === 'string' && value.length > 0
+      if (valueExistsAndString(authorizationUrl) && valueExistsAndString(reference) && valueExistsAndString(message)) {
+        toast.info('Redirecting to payment gateway...')
+        window.location.assign(authorizationUrl)
+      } else {
+        toast.warning('Payment initialized, but no authorization URL was returned. Please contact support.')
+      }
     },
     onError: (result) => {
       if (result.formError) toast.error(result.formError)

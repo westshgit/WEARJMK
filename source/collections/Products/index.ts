@@ -3,7 +3,7 @@ import { generatePreviewPath } from '@/utilities/generatePreviewPath'
 import { CollectionOverride } from '@payloadcms/plugin-ecommerce/types'
 import { MetaDescriptionField, MetaImageField, MetaTitleField, OverviewField, PreviewField } from '@payloadcms/plugin-seo/fields'
 import { DefaultDocumentIDType, Where } from 'payload'
-import { revalidateProduct, revalidateProductDelete } from '@/lib/api/product.api'
+import { revalidateProduct, revalidateProductDelete } from '@/lib/api/product.api.cache'
 
 export const ProductsCollection: CollectionOverride = ({ defaultCollection }) => ({
   ...defaultCollection,

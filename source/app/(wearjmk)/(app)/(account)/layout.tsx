@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { AccountNav } from '@/components/AccountNav'
-import { getUserServer } from '@/lib/api'
+import { getUserServer } from '@/lib/api/user.api'
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const { user } = await getUserServer()

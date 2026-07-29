@@ -1,14 +1,11 @@
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
 import clsx from 'clsx'
 import React, { Suspense } from 'react'
 
 import { Item } from './Item'
+import { getCategoriesWithCacheAPI } from '@/lib/api/category.api.cache'
 
 async function List() {
-  const payload = await getPayload({ config: configPromise })
-  const categoriesData = await payload.find({
-    collection: 'categories',
+  const categoriesData = await getCategoriesWithCacheAPI({
     sort: 'title',
     select: {
       title: true,
@@ -16,7 +13,7 @@ async function List() {
     },
   })
 
-  const categories = categoriesData.docs?.map((category) => {
+  const categories = (categoriesData ?? []).map((category) => {
     return {
       href: `/shop/${category.slug}`,
       title: category.title,
@@ -47,7 +44,7 @@ export function CategoryTabs() {
   return (
     <Suspense
       fallback={
-        <div className="col-span-2 hidden h-[400px] w-full flex-none py-4 lg:block">
+        <div className="col-span-2 hidden h-100 w-full flex-none py-4 lg:block">
           <div className={clsx(skeleton, activeAndTitles)} />
           <div className={clsx(skeleton, activeAndTitles)} />
           <div className={clsx(skeleton, items)} />

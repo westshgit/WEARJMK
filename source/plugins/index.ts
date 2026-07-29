@@ -15,7 +15,7 @@ import { defaultCountries } from '@/lib/defaultCountries'
 import type { Page, Product } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 import { paystackAdapter } from '@/lib/api/payment/paystack/paystackAdapter'
-import { revalidateCart, revalidateCartDelete } from '@/lib/api/cart.api'
+import { revalidateCart, revalidateCartDelete } from '@/lib/api/cart.api.cache'
 
 const generateTitle: GenerateTitle<Product | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | WearJMK Website` : 'WearJMK Website'
@@ -159,6 +159,16 @@ export const plugins: Plugin[] = [
     },
     products: {
       productsCollectionOverride: ProductsCollection,
+    },
+    transactions: {
+      transactionsCollectionOverride: ({ defaultCollection }) => {
+        return {
+          ...defaultCollection,
+          hooks: {
+            ...defaultCollection.hooks,
+          },
+        }
+      },
     },
   }),
 ]

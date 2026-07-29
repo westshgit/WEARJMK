@@ -1,13 +1,13 @@
 # Payments
 
 This directory contains provider adapters used by Payload Ecommerce. Paystack is
-the active provider for `NGN`; Stripe remains configured separately.
+the active checkout provider for `NGN`.
 
 ## Ownership
 
 - Payload Ecommerce owns cart subtotal calculation through its cart
   `beforeChange` hook.
-- `payment.api.ts` reloads the cart from Payload and passes the persisted
+- `payment/api.ts` reloads the cart from Payload and passes the persisted
   subtotal to the adapter. Payment code must not maintain a second subtotal
   formula.
 - Paystack receives and returns amounts in the currency subunit. For NGN,
@@ -23,9 +23,9 @@ The server validates these values in `source/lib/env.ts`:
 ```env
 PAYSTACK_SECRET_KEY=sk_test_
 PAYSTACK_API_BASE_URL=https://api.paystack.co
-PAYSTACK_CALLBACK_URL=http://localhost:3000/checkout/confirm-order
 PAYSTACK_REFERENCE_PREFIX=wearjmk
 PAYSTACK_REQUEST_TIMEOUT_MS=10000
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 ```
 
 Use a fully qualified callback URL. The reference prefix may contain only
@@ -34,7 +34,7 @@ letters, numbers, `.`, `=`, and `-`.
 ## Payment Flow
 
 1. Checkout submits the cart ID, cart secret, email, and addresses to
-   `initializePayment` in `source/lib/api/payment.api.ts`.
+   `initializePayment` in `source/lib/api/payment/api.ts`.
 2. The server reloads the cart, verifies ownership, rejects purchased carts,
    and resaves its items through Payload's cart hook so the canonical subtotal
    is refreshed from current product prices.
@@ -43,7 +43,8 @@ letters, numbers, `.`, `=`, and `-`.
    possible. Otherwise, it initializes Paystack and stores the reference,
    access code, authorization URL, amount, currency, cart, and item snapshot.
 5. The browser redirects to Paystack's authorization URL.
-6. Paystack redirects to `PAYSTACK_CALLBACK_URL` with `reference` or `trxref`.
+6. Paystack redirects to `${NEXT_PUBLIC_SERVER_URL}/checkout/confirm-order`
+   with `reference` or `trxref`.
 7. `confirmPaystackPayment` verifies the reference from the server. The browser
    never decides whether a payment succeeded.
 8. `paystack/fulfillOrder.ts` verifies amount, currency, customer, and payment

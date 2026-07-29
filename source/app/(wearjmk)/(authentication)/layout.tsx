@@ -1,3 +1,4 @@
+'use server'
 import BrandImage from '@/components/BrandImage'
 import SocialLink from '@/components/SocialLink'
 import { Support } from '@/components/Support'
@@ -5,7 +6,6 @@ import { SUPPORT_EMAIL, SUPPORT_WHATSAPP } from '@/lib/client.env'
 import { Social } from '@/payload-types'
 import { ThemeModeSelector } from '@/providers'
 import { getCachedGlobal } from '@/utilities/getGlobals'
-import { unstable_cache } from 'next/cache'
 import Image from 'next/image'
 
 function randomItem(items: readonly string[]) {
@@ -15,9 +15,9 @@ function randomItem(items: readonly string[]) {
 
 const authenticationBackgroundImages = ['/media/IMG_6383.JPG', '/media/IMG_6377.JPG', '/media/IMG_6373.JPG'] as const
 
-const getBG = unstable_cache(async () => randomItem(authenticationBackgroundImages), ['authentication-background-image'], {
-  revalidate: 60 * 60,
-})
+async function getBG() {
+  return randomItem(authenticationBackgroundImages)
+}
 
 export default async function AuthenticationLayout({ children }: { children: React.ReactNode }) {
   const social = (await getCachedGlobal('social', 1)()) as Social

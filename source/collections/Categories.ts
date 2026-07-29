@@ -2,7 +2,7 @@ import { slugField } from 'payload'
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '@/access/adminOnly'
-import { revalidateCategories, revalidateCategoriesDelete } from '@/lib/api/category.api'
+import { revalidateCategories, revalidateCategoriesDelete } from '@/lib/api/category.api.cache'
 
 export const Categories: CollectionConfig = {
   slug: 'categories',

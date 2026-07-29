@@ -1,7 +1,9 @@
+'use server'
+
 import { Grid } from '@/components/Grid'
 import { ProductGridItem } from '@/components/ProductGridItem'
 import { Button } from '@/components/ui/button'
-import { getProductsFromCategoriesOrSelectedDocs } from '@/lib/api/product.api'
+import { getProductWithCacheAPI } from '@/lib/api/product.api.cache'
 import type { Product, ShowCase as ShowCaseBlockProps } from '@/payload-types'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
@@ -14,11 +16,33 @@ export const ShowCaseBlock: React.FC<
     id?: DefaultDocumentIDType
   }
 > = async ({ showCaseDescription, showCaseTitle, categories, selectedDocs, limit = 4 }) => {
-  const products: Product[] = await getProductsFromCategoriesOrSelectedDocs({
-    categories,
-    limit,
-    selectedDocs,
-  })
+  const categoryIds = categories?.length ? categories.map((category) => (typeof category === 'object' ? category.id : category)).sort() : []
+  const products: Product[] = (
+    categoryIds.length > 0
+      ? ((await getProductWithCacheAPI({
+          depth: 1,
+          limit: limit ?? undefined,
+
+          ...(categoryIds.length > 0
+            ? {
+                where: {
+                  categories: {
+                    in: categoryIds,
+                  },
+                },
+              }
+            : {}),
+        })) ?? [])
+      : selectedDocs && selectedDocs?.length > 0
+        ? selectedDocs?.map((doc) => {
+            if (typeof doc.value === 'object') {
+              return doc.value as Product
+            }
+
+            return null
+          })
+        : []
+  ).filter((product): product is Product => product != null)
 
   if (!products?.length) return null
 

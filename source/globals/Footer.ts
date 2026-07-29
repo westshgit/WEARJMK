@@ -4,12 +4,22 @@ import { adminOnly } from '@/access/adminOnly'
 import { Carousel } from '@/blocks/Carousel/config'
 import { link } from '@/fields/link'
 import { defaultCountries } from '@/lib/defaultCountries'
+import { revalidateGlobal } from '@/utilities/globalCache'
+import { getDisableRevalidate } from '@/utilities/genericCollectionHook'
 
 export const Footer: GlobalConfig = {
   slug: 'footer',
   access: {
     read: () => true,
     update: adminOnly,
+  },
+  hooks: {
+    afterChange: [
+      ({ doc, req }) => {
+        if (!getDisableRevalidate({ req })) revalidateGlobal('footer')
+        return doc
+      },
+    ],
   },
   fields: [
     {

@@ -1,6 +1,7 @@
 import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 
 import type { Transaction } from '@/payload-types'
+
 import { createPaystackClient } from './client'
 
 type Props = {
@@ -11,160 +12,129 @@ type Props = {
   secretKey: string
 }
 
-type PaystackTransaction = Transaction & {
-  paystack?: Transaction['paystack'] & {
-    authorizationUrl?: string | null
-  }
-}
+type InitiatePayment = NonNullable<PaymentAdapter['initiatePayment']>
+type InitiatePaymentData = Parameters<InitiatePayment>[0]['data']
+type TransactionAddress = NonNullable<Transaction['billingAddress']>
+type TransactionItems = NonNullable<Transaction['items']>
 
-const generateReference = (cartID: string, prefix: string): string => {
+function generateReference(cartID: string, prefix: string): string {
   return `${prefix}-${cartID}-${crypto.randomUUID()}`
 }
 
+function normalizeAddress(address: InitiatePaymentData['billingAddress']): TransactionAddress {
+  return {
+    addressLine1: address.addressLine1,
+    addressLine2: address.addressLine2,
+    city: address.city,
+    company: address.company,
+    country: address.country,
+    firstName: address.firstName,
+    lastName: address.lastName,
+    phone: address.phone,
+    postalCode: address.postalCode,
+    state: address.state,
+    title: address.title,
+  }
+}
+
+function normalizeItems(items: InitiatePaymentData['cart']['items']): TransactionItems {
+  return items.map((item) => ({
+    ...(item.id ? { id: item.id } : {}),
+    product: typeof item.product === 'object' ? item.product.id : item.product,
+    quantity: item.quantity,
+    ...(item.variant
+      ? {
+          variant: typeof item.variant === 'object' ? item.variant.id : item.variant,
+        }
+      : {}),
+  }))
+}
+
 export const initiatePayment =
-  (props: Props): NonNullable<PaymentAdapter>['initiatePayment'] =>
-  async ({ data, req, transactionsSlug }: Parameters<NonNullable<PaymentAdapter>['initiatePayment']>[0] & { transaction?: Transaction }) => {
-    const payload = req.payload
-    const { secretKey } = props
+  ({ apiBase, callbackUrl, referencePrefix, requestTimeoutMs, secretKey }: Props): InitiatePayment =>
+  async ({ data, req, transactionsSlug = 'transactions' }) => {
+    const { billingAddress, cart, customerEmail, shippingAddress } = data
+    const currency = data.currency.toUpperCase()
+    const amount = cart?.subtotal
 
-    const customerEmail = data.customerEmail
-    const currency = data.currency
-    const cart = data.cart
-    const amount = cart.subtotal
-    const billingAddressFromData = data.billingAddress
-    const shippingAddressFromData = data.shippingAddress
-
-    if (!secretKey) {
-      throw new Error('Paystack secret key is required.')
-    }
-    if (!currency || currency.toUpperCase() !== 'NGN') {
-      throw new Error('Currency is required and must be NGN.')
-    }
-    if (!cart || !cart.items || cart.items.length === 0) {
+    if (!cart?.items?.length) {
       throw new Error('Cart is empty or not provided.')
     }
+
     if (!customerEmail || typeof customerEmail !== 'string') {
       throw new Error('A valid customer email is required to make a purchase.')
     }
+
     if (typeof amount !== 'number' || !Number.isSafeInteger(amount) || amount <= 0) {
       throw new Error('A valid amount is required to initiate a payment.')
     }
 
-    const flattenedCart = cart.items.map((item) => {
-      const productID = typeof item.product === 'object' ? item.product.id : item.product
-      const variantID = item.variant ? (typeof item.variant === 'object' ? item.variant.id : item.variant) : undefined
-      const { product: _product, variant: _variant, ...customProperties } = item
-
-      return {
-        ...customProperties,
-        product: productID,
-        quantity: item.quantity,
-        ...(variantID
-          ? {
-              variant: variantID,
-            }
-          : {}),
-      }
-    })
-
-    const existingTransactions = await payload.find({
-      collection: transactionsSlug as 'transactions',
-      limit: 1,
-      req,
-      sort: '-createdAt',
-      where: {
-        and: [
-          { cart: { equals: cart.id } },
-          { paymentMethod: { equals: 'paystack' } },
-          { status: { in: ['pending', 'succeeded'] } },
-        ],
-      },
-    })
-
-    const existingTransaction = existingTransactions.docs[0] as PaystackTransaction | undefined
-    if (existingTransaction?.status === 'succeeded') {
-      throw new Error('This cart has already been paid for.')
+    if (currency !== 'NGN') {
+      throw new Error(`Paystack does not support the selected currency: ${currency}.`)
     }
 
-    if (existingTransaction?.status === 'pending') {
-      if (existingTransaction.amount !== amount || existingTransaction.currency !== currency.toUpperCase()) {
-        throw new Error('This cart already has a pending payment for a different total.')
-      }
-
-      if (
-        existingTransaction.paystack?.reference &&
-        existingTransaction.paystack.accessCode &&
-        existingTransaction.paystack.authorizationUrl
-      ) {
-        return {
-          message: 'Existing payment session returned',
-          reference: existingTransaction.paystack.reference,
-          authorizationUrl: existingTransaction.paystack.authorizationUrl,
-          accessCode: existingTransaction.paystack.accessCode,
-          transactionID: existingTransaction.id,
-        }
-      }
-
-      throw new Error('This cart already has a pending payment.')
-    }
-
-    const reference = generateReference(String(cart.id), props.referencePrefix)
-    const paystack = createPaystackClient({
-      apiBase: props.apiBase,
-      requestTimeoutMs: props.requestTimeoutMs,
-      secretKey,
-    })
+    const items = normalizeItems(cart.items)
+    const reference = generateReference(String(cart.id), referencePrefix)
+    const normalizedShippingAddress = shippingAddress ? normalizeAddress(shippingAddress) : undefined
 
     try {
-      const initialized = await paystack.initialize({
-        email: customerEmail,
+      const initializedPayment = await createPaystackClient({
+        apiBase,
+        requestTimeoutMs,
+        secretKey,
+      }).initialize({
         amount,
+        callback_url: callbackUrl,
         currency,
-        reference,
-        callback_url: props.callbackUrl,
+        email: customerEmail,
         metadata: JSON.stringify({
           cart_id: String(cart.id),
-          cart_items_snapshot: JSON.stringify(flattenedCart),
+          cart_items_snapshot: JSON.stringify(items),
           customer_email: customerEmail,
-          shipping_address: shippingAddressFromData ? JSON.stringify(shippingAddressFromData) : undefined,
-          custom_fields: [{ display_name: 'Cart ID', variable_name: 'cart_id', value: String(cart.id) }],
+          shipping_address: normalizedShippingAddress ? JSON.stringify(normalizedShippingAddress) : undefined,
+          custom_fields: [
+            {
+              display_name: 'Cart ID',
+              value: String(cart.id),
+              variable_name: 'cart_id',
+            },
+          ],
         }),
+        reference,
       })
 
-      const transactionData = {
-        ...(req.user ? { customer: req.user.id } : { customerEmail }),
-        amount,
-        billingAddress: billingAddressFromData,
-        cart: cart.id,
-        currency: currency.toUpperCase() as 'NGN',
-        items: flattenedCart,
-        paymentMethod: 'paystack' as const,
-        status: 'pending' as const,
-        paystack: {
-          reference: initialized.reference,
-          accessCode: initialized.access_code,
-          authorizationUrl: initialized.authorization_url,
-        },
-      }
-
-      const transaction = await payload.create({
+      await req.payload.create({
         collection: transactionsSlug as 'transactions',
-        data: transactionData,
+        data: {
+          ...(req.user ? { customer: req.user.id } : { customerEmail }),
+          amount,
+          billingAddress: normalizeAddress(billingAddress),
+          cart: cart.id,
+          currency,
+          items,
+          paymentMethod: 'paystack',
+          paystack: {
+            accessCode: initializedPayment.access_code,
+            authorizationUrl: initializedPayment.authorization_url,
+            reference: initializedPayment.reference,
+          },
+          status: 'pending',
+        },
         req,
       })
 
       return {
-        message: 'Payment initiated successfully',
-        reference: initialized.reference,
-        authorizationUrl: initialized.authorization_url,
-        accessCode: initialized.access_code,
-        transactionID: transaction.id,
+        accessCode: initializedPayment.access_code,
+        authorizationUrl: initializedPayment.authorization_url,
+        message: 'Payment initiated successfully.',
+        reference: initializedPayment.reference,
       }
     } catch (error) {
-      payload.logger.error({
+      req.payload.logger.error({
         err: error,
         msg: 'Error initiating payment with Paystack',
       })
-      throw new Error(error instanceof Error ? error.message : 'Unknown error initiating payment')
+
+      throw new Error(error instanceof Error ? error.message : 'Unable to initiate payment with Paystack.')
     }
   }

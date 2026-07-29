@@ -15,12 +15,11 @@ import {
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { CREATE_ACCOUNT_ICON, LOGIN_ICON } from '@/lib/constants.client'
-import type { Category, User } from '@/payload-types'
+import type { User } from '@/payload-types'
 import { RiHeart2Line, RiLogoutBoxRLine, RiMore2Fill, RiUserLine } from '@remixicon/react'
 import { AnimatePresence, motion, Transition } from 'motion/react'
 import Link from 'next/link'
 import { Suspense, useMemo, useState } from 'react'
-import { CategoryNav } from './category'
 import { SearchInput, SearchToggle } from './search.client'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
 
@@ -42,7 +41,7 @@ export function HeaderClient({ user }: Props) {
     <div className="relative container">
       <div className="p-4 flex items-center justify-between gap-2">
         <div data-left className="flex items-center shrink-0">
-          <BrandImage />
+          <BrandImage className="-left-6!" />
         </div>
         <div className="hidden md:block w-full">
           <SearchInput />
@@ -145,25 +144,25 @@ function MobileMenu({ user }: { user: unknown }) {
           <DropdownMenuContent className="mx-2 mt-2 md:mx-0 md:mt-1" forceMount asChild align="end" alignOffset={-13}>
             <motion.div variants={dropdownVariants} initial="hidden" animate="visible" exit="hidden" transition={dropdownTransition}>
               <DropdownMenuGroup>
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel className="uppercase font-mono! text-base font-bold!">My Account</DropdownMenuLabel>
                 <DropdownMenuItem>
-                  <Link href={'/account'} className="w-full">
+                  <Link href={'/account'} className="w-full uppercase text-xs">
                     Account
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link href={'/orders'} className="w-full">
+                  <Link href={'/orders'} className="w-full uppercase text-xs">
                     Order
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Link href={'/account/addresses'} className="w-full">
+                  <Link href={'/account/addresses'} className="w-full uppercase text-xs">
                     Addresses
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled>
                   <HoverCard>
-                    <HoverCardTrigger className="text-foreground/50 cursor-not-allowed flex items-center gap-2">
+                    <HoverCardTrigger className="text-foreground/50 cursor-not-allowed flex items-center gap-2 uppercase">
                       <RiHeart2Line />
                       Wishlist
                     </HoverCardTrigger>

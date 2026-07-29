@@ -11,10 +11,8 @@ import { CarouselClient } from '@/blocks/Carousel/Component.client'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import Condition from '@/components/Condition'
-import { queryProductBySlug } from '@/lib/api'
+import { getProductAPIWithSlugAndCacheAPI } from '@/lib/api/product.api.cache'
 import ProductSheet from '@/components/product/ProductSheet'
-
-export const dynamic = 'force-dynamic'
 
 type Args = {
   params: Promise<{
@@ -24,7 +22,9 @@ type Args = {
 
 export async function generateMetadata({ params }: Args): Promise<Metadata> {
   const { slug } = await params
-  const product = await queryProductBySlug({ slug })
+  const product = await getProductAPIWithSlugAndCacheAPI({
+    slug,
+  })
 
   if (!product) return notFound()
 
@@ -62,7 +62,9 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Args) {
   const { slug } = await params
-  const product = await queryProductBySlug({ slug })
+  const product = await getProductAPIWithSlugAndCacheAPI({
+    slug,
+  })
 
   if (!product) return notFound()
 
@@ -191,7 +193,7 @@ function RelatedProducts({ products }: { products: Product[] }) {
   return (
     <Condition predicate={Boolean(products.length)}>
       <div className="py-8">
-        <h2 className="mb-4 text-2xl font-bold">Related Products</h2>
+        <h2 className="mb-4 text-2xl font-bold uppercase">Related Products</h2>
         <ul className="flex w-full gap-4 overflow-x-auto pt-1">
           <CarouselClient
             products={products}

@@ -4,7 +4,7 @@ import { paystackAdapter as createPaystackAdapter } from '@/lib/api/payment/pays
 
 export const paystackAdapter = createPaystackAdapter({
   apiBase: Env.PAYSTACK_API_BASE_URL,
-  callbackUrl: Env.PAYSTACK_CALLBACK_URL,
+  callbackUrl: new URL('/checkout/confirm-order', Env.NEXT_PUBLIC_SERVER_URL).toString(),
   referencePrefix: Env.PAYSTACK_REFERENCE_PREFIX,
   requestTimeoutMs: Env.PAYSTACK_REQUEST_TIMEOUT_MS,
   secretKey: Env.PAYSTACK_SECRET_KEY,

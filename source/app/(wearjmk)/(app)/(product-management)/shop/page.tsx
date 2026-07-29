@@ -1,7 +1,6 @@
 import { Grid } from '@/components/Grid'
 import { ProductGridItem } from '@/components/ProductGridItem'
-import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getProductAPI } from '@/lib/api/product.api'
 
 export const metadata = {
   description: 'Search for products in the store.',
@@ -16,26 +15,75 @@ type Props = {
 
 export default async function ShopPage({ searchParams }: Props) {
   const { q: searchValue, sort, category } = await searchParams
-  const payload = await getPayload({ config: configPromise })
 
-  const products = await getProduct({})
-
-  const resultsText = products.docs.length > 1 ? 'results' : 'result'
+  const products =
+    (await getProductAPI({
+      draft: false,
+      select: {
+        title: true,
+        slug: true,
+        gallery: true,
+        categories: true,
+        priceInNGN: true,
+      },
+      ...(sort ? { sort } : { sort: 'title' }),
+      ...(searchValue || category
+        ? {
+            where: {
+              and: [
+                {
+                  _status: {
+                    equals: 'published',
+                  },
+                },
+                ...(searchValue
+                  ? [
+                      {
+                        or: [
+                          {
+                            title: {
+                              like: searchValue,
+                            },
+                          },
+                          {
+                            description: {
+                              like: searchValue,
+                            },
+                          },
+                        ],
+                      },
+                    ]
+                  : []),
+                ...(category
+                  ? [
+                      {
+                        categories: {
+                          contains: category,
+                        },
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          }
+        : {}),
+    })) ?? []
+  const resultsText = products?.length > 1 ? 'results' : 'result'
 
   return (
     <div>
       {searchValue ? (
         <p className="mb-4">
-          {products.docs?.length === 0 ? 'There are no products that match ' : `Showing ${products.docs.length} ${resultsText} for `}
+          {products?.length === 0 ? 'There are no products that match ' : `Showing ${products.length} ${resultsText} for `}
           <span className="font-bold">&quot;{searchValue}&quot;</span>
         </p>
       ) : null}
 
-      {!searchValue && products.docs?.length === 0 && <p className="mb-4">No products found. Please try different filters.</p>}
+      {!searchValue && products?.length === 0 && <p className="mb-4">No products found. Please try different filters.</p>}
 
-      {products?.docs.length > 0 ? (
+      {products?.length > 0 ? (
         <Grid className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.docs.map((product) => {
+          {products.map((product) => {
             return <ProductGridItem key={product.id} product={product} mediaClassName="p-1! shadow bg-secondary aspect-3/4!" imgClassName="object-top" />
           })}
         </Grid>

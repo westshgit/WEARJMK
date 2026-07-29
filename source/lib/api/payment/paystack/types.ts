@@ -59,24 +59,13 @@ export type PaystackAdapterArgs = {
   groupOverrides?: PaymentAdapterArgs['groupOverrides']
 }
 
-/**
- * The default fields stored on a transaction for the `paystack` payment
- * method. The `reference`, `accessCode`, and authorization URL are persisted
- * so retries can safely resume the same pending payment.
- */
+/** The default field group stored on a Paystack transaction. */
 export type PaystackGroupField = GroupField
 
 /* ----------------------------------------------------------------------------
  * Paystack REST API response shapes (subset we consume).
  * @see https://paystack.com/docs/api/transaction/
  * ------------------------------------------------------------------------- */
-
-/** Generic envelope returned by every Paystack endpoint. */
-export type PaystackResponse<T> = {
-  status: boolean
-  message: string
-  data: T
-}
 
 /** Response from `POST /transaction/initialize`. */
 export type PaystackInitializeData = {
@@ -87,35 +76,35 @@ export type PaystackInitializeData = {
 
 /** Response from `GET /transaction/verify/:reference`. */
 export type PaystackTransactionData = {
-  id: number
-  domain: string
-  status: 'success' | 'failed' | 'abandoned' | 'ongoing' | 'pending' | 'processing' | 'queued' | 'reversed'
+  id?: number
+  domain?: string
+  status: string
   reference: string
   amount: number
   currency: string
-  channel: string
-  customer: {
+  channel?: string
+  customer?: {
     id: number
     email: string
   }
-  metadata: Record<string, unknown> | string | null
+  metadata?: Record<string, unknown> | string | null
 }
 
 /** Payload of a Paystack webhook event. */
 export type PaystackWebhookEvent = {
-  event: 'charge.success' | string
+  event: string
   data: {
-    id: number
-    domain: string
-    status: string
     reference: string
-    amount: number
-    currency: string
-    customer: {
+    id?: number
+    domain?: string
+    status?: string
+    amount?: number
+    currency?: string
+    customer?: {
       id: number
       email: string
       customer_code: string
     }
-    metadata: Record<string, unknown> | string | null
+    metadata?: Record<string, unknown> | string | null
   }
 }

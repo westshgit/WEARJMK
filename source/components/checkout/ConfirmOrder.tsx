@@ -2,7 +2,7 @@
 
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Button } from '@/components/ui/button'
-import { confirmPaystackPayment } from '@/lib/api/payment.api'
+import { confirmPaystackPayment } from '@/lib/api/payment/api'
 import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
 import { toast } from '@payloadcms/ui'
 import { useRouter, useSearchParams } from 'next/navigation'

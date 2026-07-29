@@ -1,4 +1,4 @@
-import type { PaystackInitializeData, PaystackResponse, PaystackTransactionData } from './types'
+import type { PaystackInitializeData, PaystackTransactionData } from './types'
 
 type PaystackClientArgs = {
   apiBase: string
@@ -6,55 +6,117 @@ type PaystackClientArgs = {
   secretKey: string
 }
 
-function getPaystackErrorMessage(value: unknown, fallback: string): string {
-  if (typeof value !== 'object' || value === null || !('message' in value)) return fallback
-  return typeof value.message === 'string' && value.message ? value.message : fallback
+type InitializeTransactionArgs = {
+  amount: number
+  callback_url: string
+  currency: 'NGN'
+  email: string
+  metadata: string
+  reference: string
 }
 
-async function parsePaystackResponse<T>(response: Response, fallback: string): Promise<T> {
-  const body: unknown = await response.json().catch(() => null)
+type PaystackEnvelope = {
+  data?: unknown
+  message?: unknown
+  status?: unknown
+}
 
-  if (
-    !response.ok ||
-    typeof body !== 'object' ||
-    body === null ||
-    !('status' in body) ||
-    body.status !== true ||
-    !('data' in body)
-  ) {
-    throw new Error(getPaystackErrorMessage(body, fallback))
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function getMessage(body: PaystackEnvelope | null, fallback: string): string {
+  return typeof body?.message === 'string' && body.message ? body.message : fallback
+}
+
+function isInitializeData(value: unknown): value is PaystackInitializeData {
+  return isRecord(value) && typeof value.access_code === 'string' && typeof value.authorization_url === 'string' && typeof value.reference === 'string'
+}
+
+function isTransactionData(value: unknown): value is PaystackTransactionData {
+  return (
+    isRecord(value) &&
+    typeof value.amount === 'number' &&
+    typeof value.currency === 'string' &&
+    typeof value.reference === 'string' &&
+    typeof value.status === 'string'
+  )
+}
+
+async function requestPaystack<T>({
+  args,
+  init,
+  path,
+  validate,
+}: {
+  args: PaystackClientArgs
+  init?: RequestInit
+  path: string
+  validate: (value: unknown) => value is T
+}): Promise<T> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), args.requestTimeoutMs)
+
+  try {
+    const headers = new Headers(init?.headers)
+    headers.set('Accept', 'application/json')
+    headers.set('Authorization', `Bearer ${args.secretKey}`)
+
+    const response = await fetch(`${args.apiBase.replace(/\/$/, '')}${path}`, {
+      ...init,
+      headers,
+      signal: controller.signal,
+    })
+
+    const rawBody: unknown = await response.json().catch(() => null)
+    const body: PaystackEnvelope | null = isRecord(rawBody) ? rawBody : null
+
+    if (!response.ok || body?.status !== true) {
+      throw new Error(getMessage(body, `Paystack request failed with status ${response.status}.`))
+    }
+
+    if (!validate(body.data)) {
+      throw new Error('Paystack returned an invalid response.')
+    }
+
+    return body.data
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Paystack did not respond in time.')
+    }
+
+    throw error
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+export function createPaystackClient(args: PaystackClientArgs) {
+  if (!args.secretKey) {
+    throw new Error('Paystack secret key is required.')
   }
 
-  return (body as PaystackResponse<T>).data
-}
-
-export function createPaystackClient({ apiBase, requestTimeoutMs, secretKey }: PaystackClientArgs) {
-  const normalizedAPIBase = apiBase.replace(/\/+$/, '')
-  const authorizationHeader = { Authorization: `Bearer ${secretKey}` }
-
   return {
-    initialize: async (body: Record<string, unknown>) => {
-      const response = await fetch(`${normalizedAPIBase}/transaction/initialize`, {
-        method: 'POST',
-        headers: {
-          ...authorizationHeader,
-          'Content-Type': 'application/json',
+    initialize(data: InitializeTransactionArgs) {
+      return requestPaystack({
+        args,
+        init: {
+          body: JSON.stringify(data),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
         },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(requestTimeoutMs),
+        path: '/transaction/initialize',
+        validate: isInitializeData,
       })
-
-      return parsePaystackResponse<PaystackInitializeData>(response, 'Paystack failed to initialize the transaction')
     },
-
-    verify: async (reference: string) => {
-      const response = await fetch(`${normalizedAPIBase}/transaction/verify/${encodeURIComponent(reference)}`, {
-        method: 'GET',
-        headers: authorizationHeader,
-        signal: AbortSignal.timeout(requestTimeoutMs),
+    verify(reference: string) {
+      return requestPaystack({
+        args,
+        path: `/transaction/verify/${encodeURIComponent(reference)}`,
+        validate: isTransactionData,
       })
-
-      return parsePaystackResponse<PaystackTransactionData>(response, 'Paystack failed to verify the transaction')
     },
   }
 }

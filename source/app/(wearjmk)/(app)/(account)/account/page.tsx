@@ -6,8 +6,8 @@ import Link from 'next/link'
 import { AccountForm } from '@/components/forms/AccountForm'
 import { OrderItem } from '@/components/OrderItem'
 import { redirect } from 'next/navigation'
-import { getUserServer } from '@/lib/api'
-import { getOrdersForUser } from '@/lib/api/order.api'
+import { getUserServer } from '@/lib/api/user.api'
+import { getOrdersAPI } from '@/lib/api/order.api'
 import Condition from '@/components/Condition'
 
 export default async function AccountPage() {
@@ -16,7 +16,7 @@ export default async function AccountPage() {
     redirect(`/login?warning=${encodeURIComponent('Please login to access your account settings.')}`)
   }
 
-  const orders = await getOrdersForUser({ limit: 5, user: user, where: { customer: { equals: user?.id } } })
+  const orders = await getOrdersAPI({ limit: 5, user: user, where: { customer: { equals: user?.id } } })
 
   return (
     <>

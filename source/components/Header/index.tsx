@@ -1,8 +1,13 @@
-import { fetchCategories } from '@/lib/api/category.api'
+import { Suspense } from 'react'
 import { HeaderClient } from './index.client'
-import { getUserServer } from '@/lib/api'
+import { getUserServer } from '@/lib/api/user.api'
 
 export async function Header() {
   const { user } = await getUserServer()
-  return <HeaderClient user={user ?? undefined} />
+
+  return (
+    <Suspense fallback={null}>
+      <HeaderClient user={user ?? undefined} />
+    </Suspense>
+  )
 }

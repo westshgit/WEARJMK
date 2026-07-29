@@ -1,46 +1,33 @@
-import type { Category } from '@/payload-types'
-import { unstable_cache } from 'next/cache'
-import { genericCollectionChangeHook, getPayloadAPI } from './shared'
-import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
+import type { CategoriesSelect, Category } from '@/payload-types'
+import { getPayloadAPI } from './shared'
+import { BasePayload } from 'payload'
 
-async function _fetchCategories(): Promise<Category[]> {
-  const payload = await getPayloadAPI()
+type FindCategoriesOptions = Parameters<BasePayload['find']>[0]
 
-  const { docs } = await payload.find({
-    collection: 'categories',
-    depth: 1,
-    limit: 100,
-    disableErrors: true,
-    select: {
-      slug: true,
-      title: true,
-      createdAt: true,
-      updatedAt: true,
-      generatedSlug: true,
-    },
-  })
-  return docs
+type _GetCategoriesArgs = Omit<FindCategoriesOptions, 'select'> & {
+  select?: CategoriesSelect<false> | CategoriesSelect<true>
 }
 
-export const fetchCategories = unstable_cache(_fetchCategories, ['categories'], {
-  tags: ['categories'],
-  revalidate: 3600,
-})
+export type GetCategoriesArgs = Partial<Omit<_GetCategoriesArgs, 'collection' | 'req'>>
 
-export const revalidateCategories = genericCollectionChangeHook<CollectionAfterChangeHook<Category>>([
-  {
-    getCacheKey: () => 'categories',
-    tagOrPath: {
-      tag: 'tag',
-    },
-  },
-])
+export async function getCategoryAPI({ select, overrideAccess, ...rest }: GetCategoriesArgs): Promise<Category[] | null> {
+  const payload = await getPayloadAPI()
 
-export const revalidateCategoriesDelete = genericCollectionChangeHook<CollectionAfterDeleteHook<Category>>([
-  {
-    getCacheKey: () => 'categories',
-    tagOrPath: {
-      tag: 'tag',
-    },
-  },
-])
+  try {
+    const { docs } = await payload.find({
+      collection: 'categories',
+      overrideAccess: overrideAccess ?? true,
+      ...(select ? { select } : {}),
+      ...rest,
+    } as _GetCategoriesArgs)
+
+    return docs as Category[]
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    return null
+  }
+}
+
+export async function getAllCategoriesAPI(): Promise<Category[] | null> {
+  return getCategoryAPI({ limit: 1000, pagination: false })
+}

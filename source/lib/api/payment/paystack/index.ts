@@ -4,11 +4,11 @@ import { confirmOrder } from './confirmOrder'
 import { initiatePayment } from './initiatePayment'
 import { webhooksEndpoint } from './endpoints/webhooks'
 import type { PaystackAdapterArgs } from './types'
-import { PaymentAdapter, PaymentAdapterClient } from '@payloadcms/plugin-ecommerce/types'
+import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
 
 /**
  * Fields stored on the transactions collection for the Paystack payment
- * method. These allow a pending payment to be resumed safely.
+ * method. These preserve the provider response needed to verify the payment.
  */
 const buildPaystackGroup = (args: PaystackAdapterArgs): GroupField => {
   const { groupOverrides } = args
@@ -105,16 +105,4 @@ export const paystackAdapter = (args: PaystackAdapterArgs): PaymentAdapter => {
   }
 }
 
-/**
- * Client-side descriptor — tells the ecommerce client context that the
- * Paystack method supports both `initiatePayment` and `confirmOrder`, and what
- * label to render in the payment-method picker.
- */
-export const paystackAdapterClient = (args: { label?: string }): PaymentAdapterClient => ({
-  name: 'paystack',
-  label: args?.label || 'Paystack',
-  confirmOrder: true,
-  initiatePayment: true,
-})
-
-export type { PaystackAdapterArgs } from './types'
+export type { PaystackAdapterArgs }

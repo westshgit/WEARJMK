@@ -22,16 +22,48 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Once again don't run any command unless explicitly instructed to do so and don't edit any auto-generated files. like `src/payload-types.ts` Always follow the guidelines and best practices outlined in the agent skills and reference documentation.
 - Should you need to modify or read files ask for permission and it would be granted or denied based on the context. Always follow the guidelines and best practices outlined in the agent skills and reference documentation.
 
+## Architecture and Feature Scope
+
+- Do not change the project's architecture or introduce new features unless the user explicitly requests that specific architectural change or feature.
+- A general instruction such as "fix it," "go ahead," or "make it work" does not authorize creating new routes, endpoints, services, transport mechanisms, abstractions, dependencies, or architectural boundaries.
+- Default to the smallest change that fixes the issue within the project's existing architecture and established patterns.
+- If an architectural change or new feature appears necessary, stop before implementing it. Explain the problem, the proposed change, affected files and behavior, alternatives, and tradeoffs, then wait for the user's explicit approval.
+- Do not infer approval from earlier messages or from permission to edit files. Architectural approval must be obtained through direct communication about the proposed design.
+
 ## Technology Stack
 
 - React 19
-- Next.js 14
+- Next.js 16.2.6
 - Tailwind CSS 4
 - Payload CMS
 - TypeScript 6
 - Shadcn UI
 - Embla Carousel
 - Bun
+
+## Project-Specific Boundaries
+
+- The application root is `source/`. Run project scripts from that directory using pnpm.
+- This project uses Next.js 16.2.6. Read the relevant local documentation under `source/node_modules/next/dist/docs/` before changing Next.js behavior.
+- Payload configuration is imported by multiple environments, including Payload API routes, GraphQL routes, Server Components, and tooling. Do not import environment-specific modules into `payload.config.ts`, collections, globals, fields, or plugins without first checking every import graph.
+- Never import `next/cache`, browser-only APIs, or client references through modules consumed by Payload configuration unless the existing architecture explicitly supports it.
+- Keep client and server module graphs separate. A file marked `'use client'` must not import mixed server barrels, Payload configuration, database APIs, cache hooks, or server-only utilities.
+- Client Components that call Server Actions must import those actions directly from their `'use server'` module.
+- Do not import from `@/lib/api` inside Client Components. Use a direct API or Server Action module path.
+- Cache readers, cache invalidation hooks, and ordinary API functions have different responsibilities. Do not combine or move them across module boundaries without explicit architectural approval.
+- Do not add internal HTTP requests, routes, endpoints, webhooks, queues, services, or transport layers as implementation details without explicit approval.
+- Payload hooks must preserve `req`, `req.context`, and transaction behavior. Nested Payload operations must receive the original `req`.
+- Respect `req.context.disableRevalidate` when working with existing cache invalidation hooks.
+
+## Change Workflow
+
+- Before editing, inspect the target file, its direct consumers, and its import graph.
+- When fixing a build-boundary error, identify the originating Client or Server Component before changing shared infrastructure.
+- Prefer a direct import correction or a small module split over redesigning the caching or request architecture.
+- Preserve user changes discovered while working. If a file changed after it was read, reread it and adapt the patch.
+- Do not run builds, tests, type generation, migrations, package installation, or development servers unless the user explicitly authorizes that command.
+- Do not modify `payload-types.ts` or other generated files manually.
+- Do not add dependencies without explaining why the existing toolchain cannot solve the problem and receiving approval.
 
 ## Code Smell and Forbidden Practices
 

@@ -1,5 +1,6 @@
+'use server'
+
 import { Button } from '@/components/ui/button'
-import { getProductsFromCategoriesOrSelectedDocs } from '@/lib/api/product.api'
 import type { Product, TwoSideWithContent as TwoSideWithContentProps } from '@/payload-types'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
@@ -7,17 +8,40 @@ import type { DefaultDocumentIDType } from 'payload'
 import type React from 'react'
 
 import { TwoSideWithContentCarousel } from './Component.client'
+import { getProductWithCacheAPI } from '@/lib/api/product.api.cache'
 
 export const TwoSideWithContentBlock: React.FC<
   TwoSideWithContentProps & {
     id?: DefaultDocumentIDType
   }
 > = async ({ limit = null, selectedDocs, categories, twoSideTitle, twoSideDescription }) => {
-  const products: Product[] = await getProductsFromCategoriesOrSelectedDocs({
-    categories,
-    limit,
-    selectedDocs,
-  })
+  const categoryIds = categories?.length ? categories.map((category) => (typeof category === 'object' ? category.id : category)).sort() : []
+  const products: Product[] = (
+    categoryIds.length > 0
+      ? ((await getProductWithCacheAPI({
+          depth: 1,
+          limit: limit ?? undefined,
+
+          ...(categoryIds.length > 0
+            ? {
+                where: {
+                  categories: {
+                    in: categoryIds,
+                  },
+                },
+              }
+            : {}),
+        })) ?? [])
+      : selectedDocs && selectedDocs?.length > 0
+        ? selectedDocs?.map((doc) => {
+            if (typeof doc.value === 'object') {
+              return doc.value as Product
+            }
+
+            return null
+          })
+        : []
+  ).filter((product): product is Product => product != null)
 
   if (!products?.length) return null
 
