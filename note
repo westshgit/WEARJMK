@@ -8,6 +8,6 @@ git push origin docker-1.0.0
 
 git add .
 git commit -m "Made update to the docker CI"
-git tag docker-2.1.1
+git tag docker-2.0.0
 git push 
-git push origin docker-2.1.1
+git push origin docker-2.0.0
