@@ -29,7 +29,7 @@ env:
   PAYSTACK_API_BASE_URL: https://api.paystack.co
   PAYSTACK_CALLBACK_URL: ${{ format('{0}/checkout/confirm-order', vars.NEXT_PUBLIC_SERVER_URL) }}
   PAYSTACK_REFERENCE_PREFIX: wearjmk
-  PAYSTACK_REQUEST_TIMEOUT_MS: '10000'
+  PAYSTACK_REQUEST_TIMEOUT_MS: "10000"
 
 jobs:
   checks:
@@ -107,8 +107,8 @@ jobs:
       NEXT_PUBLIC_SHOWCASE_PRODUCTS_LIMITS: ${{ vars.NEXT_PUBLIC_SHOWCASE_PRODUCTS_LIMITS }}
       DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY }}
       DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME }}
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DOCKER_USERNAME: ${{ vars.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ vars.DOCKER_PASSWORD }}
       BUILDKIT_HOST: docker-container://buildkit
 
     steps:
