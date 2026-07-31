@@ -22,7 +22,10 @@ export default function ShopLayout({ children }: { children: React.ReactNode }) 
         <div className="md:hidden  mt-2 mb-12 md:mt-0 md:mb-0">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="border-muted-foreground/20 text-muted-foreground hover:bg-muted/50 hover:text-foreground gap-1.5 px-4">
+              <Button
+                variant="outline"
+                className="border-muted-foreground/20 text-muted-foreground hover:bg-muted/50 hover:text-foreground gap-1.5 px-4 uppercase"
+              >
                 More
                 <RiMoreLine className="size-4" />
               </Button>

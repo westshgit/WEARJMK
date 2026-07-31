@@ -11,8 +11,10 @@ import { ChevronLeftIcon } from 'lucide-react'
 import { ProductItem } from '@/components/ProductItem'
 import { OrderStatus } from '@/components/OrderStatus'
 import { AddressItem } from '@/components/addresses/AddressItem'
-import { getUserServer } from '@/lib/api'
+import { GUEST_ORDER_ACCESS_CONTEXT, guestOrderCredentialsSchema } from '@/access/guestOrderAccess'
+import { checkRole } from '@/access/utilities'
 import { getOrdersAPI } from '@/lib/api/order.api'
+import { syntheticServerRequest } from '@/lib/api/shared'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,20 +26,30 @@ type PageProps = {
 export default async function Order({ params, searchParams }: PageProps) {
   const { id } = await params
   const { email = '', accessToken = '' } = await searchParams
+  const guestCredentialsResult = guestOrderCredentialsSchema.safeParse({ accessToken, email })
+  const guestCredentials = guestCredentialsResult.success ? guestCredentialsResult.data : null
+  const req = await syntheticServerRequest()
+  const user = req.user
 
-  const { user } = await getUserServer()
+  if (!user && !guestCredentials) {
+    return notFound()
+  }
+
+  if (guestCredentials) {
+    req.context = {
+      ...req.context,
+      [GUEST_ORDER_ACCESS_CONTEXT]: guestCredentials,
+    }
+  }
+
   const orders = await getOrdersAPI({
-    user,
+    ...(user ? { user } : {}),
     depth: 2,
+    req,
     where: {
-      and: [
-        {
-          id: {
-            equals: id,
-          },
-        },
-      ],
-      ...(user ? { customer: { equals: user?.id } } : { accessToken: { equals: accessToken }, ...(email ? { customerEmail: { equals: email } } : {}) }),
+      id: {
+        equals: id,
+      },
     },
     select: {
       amount: true,
@@ -49,7 +61,6 @@ export default async function Order({ params, searchParams }: PageProps) {
         id: true,
       },
       customerEmail: true,
-      transactions: true,
       customer: true,
       status: true,
       createdAt: true,
@@ -64,11 +75,13 @@ export default async function Order({ params, searchParams }: PageProps) {
 
   const firstOrder = orders[0]
 
-  const canAccessAsGuest = !user && email && accessToken && firstOrder && firstOrder.customerEmail && firstOrder.customerEmail === email
-  const canAccessAsUser =
-    user && firstOrder && firstOrder.customer && (typeof firstOrder.customer === 'object' ? firstOrder.customer.id : firstOrder.customer) === user.id
+  const canAccessAsGuest = Boolean(guestCredentials && firstOrder.customerEmail && firstOrder.customerEmail.toLowerCase() === guestCredentials.email)
+  const canAccessAsUser = Boolean(
+    user && firstOrder.customer && (typeof firstOrder.customer === 'object' ? firstOrder.customer.id : firstOrder.customer) === user.id,
+  )
+  const canAccessAsAdmin = checkRole(['admin'], user)
 
-  if (!canAccessAsGuest && !canAccessAsUser) {
+  if (!canAccessAsAdmin && !canAccessAsGuest && !canAccessAsUser) {
     return notFound()
   }
 

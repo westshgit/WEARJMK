@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { RiWhatsappFill } from '@remixicon/react'
+import { cn } from '@/utilities'
 
 type Support = {
   email: string
@@ -124,7 +125,7 @@ export function Support({ email, showLabel = false, whatsapp, mode }: Support) {
           <PopoverHeader className="gap-3">
             <div className="space-y-1">
               <PopoverTitle>
-                <h6 className="text-lg">{heading}</h6>
+                <h6 className="text-lg uppercase">{heading}</h6>
               </PopoverTitle>
               <PopoverDescription>{description}</PopoverDescription>
               {!hasEmail ? <p className="text-sm text-destructive">Support email is currently unavailable. Please try again shortly.</p> : null}
@@ -136,7 +137,7 @@ export function Support({ email, showLabel = false, whatsapp, mode }: Support) {
             <Button asChild variant="outline">
               <a
                 aria-disabled={!hasEmail}
-                className={!hasEmail ? 'pointer-events-none opacity-50' : undefined}
+                className={cn(!hasEmail ? 'pointer-events-none opacity-50 ' : undefined, 'uppercase')}
                 href={hasEmail ? emailHref : undefined}
                 onClick={(event) => {
                   if (!hasEmail) event.preventDefault()
@@ -153,7 +154,7 @@ export function Support({ email, showLabel = false, whatsapp, mode }: Support) {
               <Button asChild variant="outline">
                 <a
                   aria-disabled={!hasWhatsapp}
-                  className={!hasWhatsapp ? 'pointer-events-none opacity-50' : undefined}
+                  className={cn(!hasWhatsapp ? 'pointer-events-none opacity-50 ' : undefined, 'uppercase')}
                   href={hasWhatsapp ? whatsappHref : undefined}
                   onClick={(event) => {
                     if (!hasWhatsapp) event.preventDefault()

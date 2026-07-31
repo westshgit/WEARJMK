@@ -5,7 +5,7 @@ export function OpenCartButton({ className, quantity, ...rest }: { className?: s
   return (
     <Button variant="ghost" size="sm" className="hover:cursor-pointer" {...rest}>
       <RiShoppingCart2Line />
-      <span>Cart</span>
+      <span className="font-mono! uppercase font-semibold!">Cart</span>
 
       {quantity ? (
         <>

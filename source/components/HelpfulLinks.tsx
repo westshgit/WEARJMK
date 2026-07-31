@@ -19,7 +19,7 @@ const isHelpfulLink = (link: HelpfulLink | ReactNode): link is HelpfulLink => ty
 export default function HelpfulLinks({ label = 'Other helpful links:', links }: HelpfulLinksProps) {
   return (
     <div className="w-full max-w-md border-t pt-8">
-      <p className="mb-4 text-sm text-muted-foreground">{label}</p>
+      <p className="mb-4 text-sm text-muted-foreground uppercase">{label}</p>
 
       <ul className="mb-6 space-y-2 text-sm">
         {links.map((link, index) => (

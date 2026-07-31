@@ -3,13 +3,14 @@ import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import type { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
-import type { Field, Plugin } from 'payload'
+import type { Field, Plugin, Where } from 'payload'
 
 import { adminOnlyFieldAccess } from '@/access/adminOnlyFieldAccess'
 import { adminOrPublishedStatus } from '@/access/adminOrPublishedStatus'
 import { customerOnlyFieldAccess } from '@/access/customerOnlyFieldAccess'
 import { isAdmin } from '@/access/isAdmin'
 import { isDocumentOwner } from '@/access/isDocumentOwner'
+import { guestOrderAccess } from '@/access/guestOrderAccess'
 import { ProductsCollection } from '@/collections/Products'
 import { defaultCountries } from '@/lib/defaultCountries'
 import type { Page, Product } from '@/payload-types'
@@ -104,9 +105,38 @@ export const plugins: Plugin[] = [
         })
       },
     },
+
     orders: {
       ordersCollectionOverride: ({ defaultCollection }) => ({
         ...defaultCollection,
+        access: {
+          ...defaultCollection.access,
+          read: async (args) => {
+            const adminAccess = await isAdmin(args)
+
+            if (adminAccess) {
+              return true
+            }
+
+            const ownerAccess = await isDocumentOwner(args)
+            const guestAccess = await guestOrderAccess(args)
+            const constraints = [ownerAccess, guestAccess].filter(
+              (accessResult): accessResult is Where => typeof accessResult === 'object' && accessResult !== null,
+            )
+
+            if (constraints.length === 1) {
+              return constraints[0]
+            }
+
+            if (constraints.length > 1) {
+              return {
+                or: constraints,
+              }
+            }
+
+            return false
+          },
+        },
         fields: [
           ...defaultCollection.fields,
           {

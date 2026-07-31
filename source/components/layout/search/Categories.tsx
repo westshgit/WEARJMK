@@ -12,7 +12,7 @@ async function CategoryList() {
 
   return (
     <div>
-      <h3 className="text-xs mb-2 text-muted-foreground">Category</h3>
+      <h3 className="mb-2 text-muted-foreground uppercase text-3xl">Category</h3>
 
       <ul>
         {categories?.map((category) => {

@@ -19,13 +19,13 @@ export default function Error({ reset }: { reset: () => void }) {
       <div>{<BrandImage />}</div>
 
       <div className="flex-1 md:flex md:items-center w-full md:flex-col md:justify-center">
-        <h1 className="text-7xl md:text-9xl font-bold text-accent-foreground mb-4">Error</h1>
-        <p className="text-xl md:text-2xl font-semibold text-foreground mb-2">Something Went Wrong</p>
+        <h1 className="text-7xl md:text-9xl font-bold text-accent-foreground mb-4 uppercase">Error</h1>
+        <p className="text-xl md:text-2xl font-semibold text-foreground mb-2 uppercase">Something Went Wrong</p>
         <p className="text-base text-muted-foreground text-start md:text-center max-w-md mb-8">
           There was an issue with our store. This could be a temporary issue, please try your action again.
         </p>
 
-        <Button onClick={reset} className="mb-12">
+        <Button onClick={reset} className="mb-12 uppercase">
           Try Again <RefreshCcwIcon />
         </Button>
 

@@ -22,12 +22,12 @@ export default function NotFound() {
 
       <div className="flex-1 md:flex md:items-center w-full md:flex-col md:justify-center">
         <h1 className="text-7xl md:text-9xl font-bold text-accent-foreground mb-4">404</h1>
-        <p className="text-xl md:text-2xl font-semibold text-foreground mb-2">Page Not Found</p>
+        <p className="text-xl md:text-2xl font-semibold text-foreground mb-2 uppercase">Page Not Found</p>
         <p className="text-base text-muted-foreground text-start md:text-center max-w-md mb-8">
           We couldn't find the page you were looking for. It may have been moved or deleted.
         </p>
 
-        <div className="flex gap-4 mb-12">
+        <div className="flex gap-4 mb-12 *:uppercase">
           <Button asChild>
             <Link href="/">Go home</Link>
           </Button>
