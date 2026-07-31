@@ -5,3 +5,9 @@ Tagging docker and pushing it to github
 git tag docker-1.0.0
 git push origin docker-1.0.0
 
+
+
+git commit -m "Made update to the docker CI"
+git tag docker-2.1.1
+git push 
+git push origin docker-2.1.1
