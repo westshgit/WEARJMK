@@ -103,7 +103,7 @@ export type PaystackWebhookEvent = {
     customer?: {
       id: number
       email: string
-      customer_code: string
+      customer_code?: string
     }
     metadata?: Record<string, unknown> | string | null
   }

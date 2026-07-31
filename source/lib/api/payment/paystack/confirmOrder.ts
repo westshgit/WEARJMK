@@ -1,16 +1,24 @@
 import type { Order } from '@/payload-types'
 import { paystackConfirmOrderResultSchema } from '@/lib/schema/payment/paystack'
+import type { PaystackConfirmOrderResult } from '@/lib/schema/payment/paystack'
 import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
+import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
 
 import { createPaystackClient } from './client'
-import { getTransactionAPI } from '../../transaction.api'
-import { getOrdersAPI } from '../../order.api'
 
 type Props = {
   apiBase: string
   requestTimeoutMs: number
   secretKey: string
+}
+
+type ConfirmPaystackOrderArgs = Props & {
+  cartsSlug?: string
+  ordersSlug?: string
+  reference: string
+  req: PayloadRequest
+  transactionsSlug?: string
 }
 
 const paymentReferenceSchema = z
@@ -67,179 +75,213 @@ function parsePaystackMetadata(metadata: unknown) {
   return result.data
 }
 
-export const confirmOrder =
-  ({ apiBase, requestTimeoutMs, secretKey }: Props): NonNullable<PaymentAdapter['confirmOrder']> =>
-  async ({ data, req, transactionsSlug = 'transactions', cartsSlug = 'carts', ordersSlug = 'orders' }) => {
-    const payload = req.payload
+export async function confirmPaystackOrder({
+  apiBase,
+  cartsSlug = 'carts',
+  ordersSlug = 'orders',
+  reference,
+  req,
+  requestTimeoutMs,
+  secretKey,
+  transactionsSlug = 'transactions',
+}: ConfirmPaystackOrderArgs): Promise<PaystackConfirmOrderResult> {
+  const payload = req.payload
 
-    try {
-      const parsedReference = paymentReferenceSchema.safeParse(data.reference)
+  try {
+    const parsedReference = paymentReferenceSchema.safeParse(reference)
 
-      if (!parsedReference.success) {
-        throw new Error('A valid Paystack payment reference is required.')
+    if (!parsedReference.success) {
+      throw new Error('A valid Paystack payment reference is required.')
+    }
+
+    const paymentReference = parsedReference.data
+    const transactionsResult = await payload.find({
+      collection: transactionsSlug as 'transactions',
+      limit: 1,
+      overrideAccess: true,
+      req,
+      where: {
+        'paystack.reference': {
+          equals: paymentReference,
+        },
+      },
+    })
+    const transaction = transactionsResult.docs[0]
+
+    if (!transaction) {
+      throw new Error('No transaction found for the provided Paystack reference.')
+    }
+
+    const { confirmPaymentRequest } = createPaystackClient({
+      apiBase,
+      requestTimeoutMs,
+      secretKey,
+    })
+    const verificationResult = await confirmPaymentRequest(paymentReference)
+
+    if (!verificationResult.ok) {
+      throw new Error(verificationResult.error.message)
+    }
+
+    const verifiedPayment = verificationResult.value.data.data
+
+    if (verifiedPayment.status !== 'success') {
+      throw new Error('Payment has not been completed.')
+    }
+
+    if (verifiedPayment.reference !== paymentReference) {
+      throw new Error('Paystack returned a different payment reference.')
+    }
+
+    if (transaction.amount === null || transaction.amount === undefined || verifiedPayment.amount !== transaction.amount) {
+      throw new Error('The verified payment amount does not match the transaction.')
+    }
+
+    const verifiedCurrency = verifiedPayment.currency.toUpperCase()
+
+    if (verifiedCurrency !== 'NGN' || verifiedCurrency !== transaction.currency) {
+      throw new Error('The verified payment currency does not match the transaction.')
+    }
+
+    const metadata = parsePaystackMetadata(verifiedPayment.metadata)
+    const cartID = typeof metadata.cart_id === 'string' ? Number(metadata.cart_id) : metadata.cart_id
+
+    if (!Number.isSafeInteger(cartID) || cartID <= 0) {
+      throw new Error('Paystack returned an invalid cart ID.')
+    }
+
+    const transactionCartID = typeof transaction.cart === 'object' ? transaction.cart?.id : transaction.cart
+
+    if (!transactionCartID || transactionCartID !== cartID) {
+      throw new Error('The verified cart does not match the transaction.')
+    }
+
+    const customerID = typeof transaction.customer === 'object' ? transaction.customer?.id : transaction.customer
+    const customerEmail = transaction.customerEmail ?? verifiedPayment.customer?.email
+
+    if (!customerID && !customerEmail) {
+      throw new Error('No customer was found for this transaction.')
+    }
+
+    if (!customerID && !metadata.cartSecret) {
+      throw new Error('The guest cart secret is missing from the verified payment metadata.')
+    }
+
+    const timestamp = new Date().toISOString()
+    const markCartPurchased = () =>
+      payload.update({
+        id: cartID,
+        collection: cartsSlug as 'carts',
+        data: {
+          items: [],
+          purchasedAt: timestamp,
+          status: 'purchased',
+        },
+        overrideAccess: true,
+        req,
+      })
+    const updateTransaction = (orderID: number) =>
+      payload.update({
+        id: transaction.id,
+        collection: transactionsSlug as 'transactions',
+        data: {
+          order: orderID,
+          status: 'succeeded',
+        },
+        overrideAccess: true,
+        req,
+      })
+    const findExistingOrder = async () => {
+      const transactionOrderID = transaction.order && typeof transaction.order === 'object' ? transaction.order.id : transaction.order
+
+      if (transactionOrderID) {
+        try {
+          return await payload.findByID({
+            id: transactionOrderID,
+            collection: ordersSlug as 'orders',
+            overrideAccess: true,
+            req,
+          })
+        } catch {
+          // Fall through to the unique payment reference lookup.
+        }
       }
 
-      const paymentReference = parsedReference.data
-      const transactionsResult = await getTransactionAPI({
+      const result = await payload.find({
+        collection: ordersSlug as 'orders',
+        limit: 1,
+        overrideAccess: true,
         req,
         where: {
-          'paystack.reference': {
+          paymentReference: {
             equals: paymentReference,
           },
         },
       })
-      const transaction = transactionsResult?.[0]
 
-      if (!transaction) {
-        throw new Error('No transaction found for the provided Paystack reference.')
-      }
+      return result.docs[0]
+    }
 
-      const { confirmPaymentRequest } = createPaystackClient({
-        apiBase,
-        requestTimeoutMs,
-        secretKey,
-      })
-      const verificationResult = await confirmPaymentRequest(paymentReference)
+    let order = await findExistingOrder()
+    let alreadyConfirmed = Boolean(order)
 
-      if (!verificationResult.ok) {
-        throw new Error(verificationResult.error.message)
-      }
-
-      const verifiedPayment = verificationResult.value.data.data
-
-      if (verifiedPayment.status !== 'success') {
-        throw new Error('Payment has not been completed.')
-      }
-
-      if (verifiedPayment.reference !== paymentReference) {
-        throw new Error('Paystack returned a different payment reference.')
-      }
-
-      if (transaction.amount === null || transaction.amount === undefined || verifiedPayment.amount !== transaction.amount) {
-        throw new Error('The verified payment amount does not match the transaction.')
-      }
-
-      const verifiedCurrency = verifiedPayment.currency.toUpperCase()
-
-      if (verifiedCurrency !== 'NGN' || verifiedCurrency !== transaction.currency) {
-        throw new Error('The verified payment currency does not match the transaction.')
-      }
-
-      const metadata = parsePaystackMetadata(verifiedPayment.metadata)
-      const cartID = typeof metadata.cart_id === 'string' ? Number(metadata.cart_id) : metadata.cart_id
-
-      if (!Number.isSafeInteger(cartID) || cartID <= 0) {
-        throw new Error('Paystack returned an invalid cart ID.')
-      }
-
-      const transactionCartID = typeof transaction.cart === 'object' ? transaction.cart?.id : transaction.cart
-
-      if (!transactionCartID || transactionCartID !== cartID) {
-        throw new Error('The verified cart does not match the transaction.')
-      }
-
-      const customerID = typeof transaction.customer === 'object' ? transaction.customer?.id : transaction.customer
-      const customerEmail = transaction.customerEmail ?? verifiedPayment.customer?.email
-
-      if (!customerID && !customerEmail) {
-        throw new Error('No customer was found for this transaction.')
-      }
-
-      if (!customerID && !metadata.cartSecret) {
-        throw new Error('The guest cart secret is missing from the verified payment metadata.')
-      }
-
-      const cartRequest = metadata.cartSecret
-        ? {
-            ...req,
-            context: {
-              ...req.context,
-              cartSecret: metadata.cartSecret,
-            },
-          }
-        : req
-      const timestamp = new Date().toISOString()
-      const clearPurchasedCart = () =>
-        payload.update({
-          id: cartID,
-          collection: cartsSlug as 'carts',
+    if (!order) {
+      try {
+        order = await payload.create({
+          collection: ordersSlug as 'orders',
           data: {
-            items: [],
-            purchasedAt: timestamp,
-            status: 'purchased',
+            amount: verifiedPayment.amount,
+            currency: verifiedCurrency,
+            ...(customerID ? { customer: customerID } : { customerEmail }),
+            items: metadata.cartItemSnapShot,
+            paymentReference,
+            shippingAddress: metadata.shippingAddress as Order['shippingAddress'],
+            status: 'processing',
+            transactions: [transaction.id],
           },
-          overrideAccess: false,
-          req: cartRequest,
-        })
-
-      if (transaction.status === 'succeeded' && transaction.order) {
-        const orderID = typeof transaction.order === 'object' ? transaction.order.id : transaction.order
-        const existingOrderResult = await getOrdersAPI({
+          overrideAccess: true,
           req,
-          where: {
-            id: {
-              equals: orderID,
-            },
-          },
         })
-        const existingOrder = existingOrderResult[0]
+      } catch (error) {
+        order = await findExistingOrder()
 
-        if (!existingOrder) {
-          throw new Error("Transaction marked successful, but couldn't process your order, please contact support!")
+        if (!order) {
+          throw error
         }
 
-        await clearPurchasedCart()
-
-        return paystackConfirmOrderResultSchema.parse({
-          message: 'Paystack order already confirmed.',
-          orderID: existingOrder.id,
-          transactionID: transaction.id,
-          ...(existingOrder.accessToken ? { accessToken: existingOrder.accessToken } : {}),
-          ...(existingOrder.customerEmail ? { email: existingOrder.customerEmail } : {}),
-        })
+        alreadyConfirmed = true
       }
-
-      const order = await payload.create({
-        collection: ordersSlug as 'orders',
-        data: {
-          amount: verifiedPayment.amount,
-          currency: verifiedCurrency,
-          ...(customerID ? { customer: customerID } : { customerEmail }),
-          items: metadata.cartItemSnapShot,
-          paymentReference,
-          shippingAddress: metadata.shippingAddress as Order['shippingAddress'],
-          status: 'processing',
-          transactions: [transaction.id],
-        },
-        req,
-      })
-
-      await Promise.all([
-        clearPurchasedCart(),
-        payload.update({
-          id: transaction.id,
-          collection: transactionsSlug as 'transactions',
-          data: {
-            order: order.id,
-            status: 'succeeded',
-          },
-          req,
-        }),
-      ])
-
-      return paystackConfirmOrderResultSchema.parse({
-        message: 'Paystack order confirmed successfully.',
-        orderID: order.id,
-        transactionID: transaction.id,
-        ...(order.accessToken ? { accessToken: order.accessToken } : {}),
-        ...(!customerID && customerEmail ? { email: customerEmail } : {}),
-      })
-    } catch (error) {
-      payload.logger.error({
-        err: error,
-        msg: 'Error confirming order with Paystack',
-      })
-
-      throw new Error(error instanceof Error ? error.message : 'Unable to confirm the Paystack order.')
     }
+
+    await Promise.all([markCartPurchased(), updateTransaction(order.id)])
+
+    return paystackConfirmOrderResultSchema.parse({
+      message: alreadyConfirmed ? 'Paystack order already confirmed.' : 'Paystack order confirmed successfully.',
+      orderID: order.id,
+      transactionID: transaction.id,
+      ...(order.accessToken ? { accessToken: order.accessToken } : {}),
+      ...(!customerID && customerEmail ? { email: customerEmail } : {}),
+    })
+  } catch (error) {
+    payload.logger.error({
+      err: error,
+      msg: 'Error confirming order with Paystack',
+    })
+
+    throw new Error(error instanceof Error ? error.message : 'Unable to confirm the Paystack order.')
   }
+}
+
+export const confirmOrder =
+  ({ apiBase, requestTimeoutMs, secretKey }: Props): NonNullable<PaymentAdapter['confirmOrder']> =>
+  ({ cartsSlug = 'carts', data, ordersSlug = 'orders', req, transactionsSlug = 'transactions' }) =>
+    confirmPaystackOrder({
+      apiBase,
+      cartsSlug,
+      ordersSlug,
+      reference: data.reference,
+      req,
+      requestTimeoutMs,
+      secretKey,
+      transactionsSlug,
+    })
