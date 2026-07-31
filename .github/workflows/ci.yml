@@ -167,7 +167,7 @@ jobs:
         id: image
         run: |
           TAG="${GITHUB_REF_NAME#docker-}"
-          IMAGE_REF="${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}"
+          IMAGE_REF="${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${DOCKER_IMAGE_NAME}"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
           echo "versioned=${IMAGE_REF}:${TAG}" >> "$GITHUB_OUTPUT"
