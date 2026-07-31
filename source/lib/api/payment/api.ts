@@ -6,17 +6,11 @@ import { addressSchema } from '@/lib/schema/address'
 import { flattenZodErrors } from '@/lib/schema'
 import { syntheticServerRequest } from '@/lib/api/shared'
 import { initializePaymentSchema } from '@/lib/schema/payment'
+import { paystackConfirmOrderResultSchema } from '@/lib/schema/payment/paystack'
 import { getCartById } from '@/lib/api/cart.api'
 import type { ActionResult } from '@/lib/shared'
-import type {
-  ConfirmPaystackPaymentResult,
-  InitializePaymentArgs,
-  InitializePaymentResult,
-  PaymentInitiatePaymentData,
-} from '@/lib/api/payment/types'
-import { paystackAdapter } from '@/lib/api/payment/paystack/paystackAdapter'
-import { verifyPaystackPayment } from '@/lib/api/payment/paystack/verifyPayment'
-import { Env } from '@/lib/env'
+import type { ConfirmPaystackPaymentResult, InitializePaymentArgs, InitializePaymentResult, PaymentInitiatePaymentData } from '@/lib/api/payment/types'
+import { paystackAdapter } from '@/lib/api/payment/paystack/adapter'
 
 export async function initializePayment(args: InitializePaymentArgs): Promise<ActionResult<InitializePaymentResult>> {
   // Normalize and validate the checkout payload before touching payment state.
@@ -115,11 +109,17 @@ export async function initializePayment(args: InitializePaymentArgs): Promise<Ac
   }
 }
 
-export async function confirmPaystackPayment(reference: string): Promise<ActionResult<ConfirmPaystackPaymentResult>> {
+export async function confirmPaystackPayment({ reference }: { reference: string }): Promise<ActionResult<ConfirmPaystackPaymentResult>> {
   let req: Awaited<ReturnType<typeof syntheticServerRequest>> | undefined
 
   try {
-    const parsedReference = zod.string().trim().min(1).max(100).regex(/^[A-Za-z0-9.=-]+$/).safeParse(reference)
+    const parsedReference = zod
+      .string()
+      .trim()
+      .min(1)
+      .max(100)
+      .regex(/^[A-Za-z0-9.=-]+$/)
+      .safeParse(reference)
 
     if (!parsedReference.success) {
       return {
@@ -129,22 +129,21 @@ export async function confirmPaystackPayment(reference: string): Promise<ActionR
     }
 
     req = await syntheticServerRequest()
-
-    const fulfillment = await verifyPaystackPayment({
-      apiBase: Env.PAYSTACK_API_BASE_URL,
-      decrementInventory: true,
-      reference: parsedReference.data,
+    const result = await paystackAdapter.confirmOrder({
+      data: {
+        reference: parsedReference.data,
+      },
       req,
-      requestTimeoutMs: Env.PAYSTACK_REQUEST_TIMEOUT_MS,
-      secretKey: Env.PAYSTACK_SECRET_KEY,
     })
+    const parsedResult = paystackConfirmOrderResultSchema.safeParse(result)
+
+    if (!parsedResult.success) {
+      throw new Error('Paystack returned invalid order confirmation data.')
+    }
 
     return {
       success: true,
-      data: {
-        ...(fulfillment.order.accessToken ? { accessToken: fulfillment.order.accessToken } : {}),
-        orderID: fulfillment.order.id,
-      },
+      data: parsedResult.data,
     }
   } catch (error) {
     req?.payload.logger.error({

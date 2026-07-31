@@ -1,4 +1,5 @@
 import { addressSchema } from '@/lib/schema/address'
+import type { PaystackConfirmOrderResult } from '@/lib/schema/payment/paystack'
 import { Cart } from '@/payload-types'
 import zod from 'zod'
 import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
@@ -22,7 +23,4 @@ export type InitializePaymentResult = NonNullable<Awaited<ReturnType<PaymentAdap
 export type PaymentInitiatePayment = NonNullable<PaymentAdapter['initiatePayment']>
 export type PaymentInitiatePaymentData = Parameters<PaymentInitiatePayment>[0]['data']
 
-export type ConfirmPaystackPaymentResult = {
-  accessToken?: string
-  orderID: number
-}
+export type ConfirmPaystackPaymentResult = PaystackConfirmOrderResult

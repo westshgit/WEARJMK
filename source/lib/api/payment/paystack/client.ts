@@ -1,8 +1,8 @@
-import type { PaystackInitializeData, PaystackTransactionData } from './types'
+import { z } from 'zod'
 
 type PaystackClientArgs = {
   apiBase: string
-  requestTimeoutMs: number
+  requestTimeoutMs?: number
   secretKey: string
 }
 
@@ -12,53 +12,93 @@ type InitializeTransactionArgs = {
   currency: 'NGN'
   email: string
   metadata: string
-  reference: string
+  reference?: string
 }
 
-type PaystackEnvelope = {
-  data?: unknown
-  message?: unknown
-  status?: unknown
+const PaystackInitializeDataSchema = z.object({
+  authorization_url: z.url(),
+  access_code: z.string().min(1),
+  reference: z.string().min(1),
+})
+
+const PaystackConfirmDataSchema = z.object({
+  amount: z.number().int().nonnegative(),
+  currency: z.string().min(1),
+  customer: z
+    .object({
+      email: z.email(),
+      id: z.number().int(),
+    })
+    .optional(),
+  metadata: z.union([z.record(z.string(), z.unknown()), z.string(), z.null()]).optional(),
+  reference: z.string().min(1),
+  status: z.string().min(1),
+})
+
+const PaystackInitializeResponseBodySchema = z.object({
+  status: z.boolean(),
+  message: z.string().optional(),
+  data: PaystackInitializeDataSchema,
+})
+
+const PaystackConfirmPaymentResponseBodySchema = z.object({
+  status: z.literal(true),
+  message: z.string().optional(),
+  data: PaystackConfirmDataSchema,
+})
+
+function createPaystackEnvelopeSchema<TSchema extends z.ZodType>(dataSchema: TSchema) {
+  return z.object({
+    status: z.number().int().min(200).max(299),
+    data: dataSchema,
+    message: z.string().optional(),
+  })
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
+export const PaystackInitializeEnvelopeSchema = createPaystackEnvelopeSchema(PaystackInitializeResponseBodySchema)
+
+export const PaystackConfirmEnvelopeSchema = createPaystackEnvelopeSchema(PaystackConfirmPaymentResponseBodySchema)
+
+export type PaystackInitializeEnvelope = z.infer<typeof PaystackInitializeEnvelopeSchema>
+
+export type PaystackConfirmEnvelope = z.infer<typeof PaystackConfirmEnvelopeSchema>
+
+type PaystackErrorCode = 'ABORTED' | 'HTTP_ERROR' | 'INVALID_RESPONSE' | 'NETWORK_ERROR'
+
+type PaystackError = {
+  code: PaystackErrorCode
+  message: string
+  status?: number
+  issues?: z.core.$ZodIssue[]
 }
 
-function getMessage(body: PaystackEnvelope | null, fallback: string): string {
-  return typeof body?.message === 'string' && body.message ? body.message : fallback
-}
+export type PaystackResult<T> =
+  | {
+      ok: true
+      value: T
+    }
+  | {
+      ok: false
+      error: PaystackError
+    }
 
-function isInitializeData(value: unknown): value is PaystackInitializeData {
-  return isRecord(value) && typeof value.access_code === 'string' && typeof value.authorization_url === 'string' && typeof value.reference === 'string'
-}
-
-function isTransactionData(value: unknown): value is PaystackTransactionData {
-  return (
-    isRecord(value) &&
-    typeof value.amount === 'number' &&
-    typeof value.currency === 'string' &&
-    typeof value.reference === 'string' &&
-    typeof value.status === 'string'
-  )
-}
-
-async function requestPaystack<T>({
+async function requestPaystack<TSchema extends z.ZodType>({
   args,
   init,
   path,
-  validate,
+  schema,
 }: {
   args: PaystackClientArgs
   init?: RequestInit
   path: string
-  validate: (value: unknown) => value is T
-}): Promise<T> {
+  schema: TSchema
+}): Promise<PaystackResult<z.output<TSchema>>> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), args.requestTimeoutMs)
+  const timeout = setTimeout(() => controller.abort(), args.requestTimeoutMs ?? 10_000)
 
   try {
     const headers = new Headers(init?.headers)
+
     headers.set('Accept', 'application/json')
     headers.set('Authorization', `Bearer ${args.secretKey}`)
 
@@ -68,36 +108,67 @@ async function requestPaystack<T>({
       signal: controller.signal,
     })
 
-    const rawBody: unknown = await response.json().catch(() => null)
-    const body: PaystackEnvelope | null = isRecord(rawBody) ? rawBody : null
+    const responseBody: unknown = await response.json().catch(() => null)
 
-    if (!response.ok || body?.status !== true) {
-      throw new Error(getMessage(body, `Paystack request failed with status ${response.status}.`))
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: {
+          code: 'HTTP_ERROR',
+          message: response.statusText || `Paystack request failed with status ${response.status}.`,
+          status: response.status,
+        },
+      }
     }
 
-    if (!validate(body.data)) {
-      throw new Error('Paystack returned an invalid response.')
+    const result = schema.safeParse({
+      status: response.status,
+      data: responseBody,
+      ...(response.statusText ? { message: response.statusText } : {}),
+    })
+
+    if (!result.success) {
+      return {
+        ok: false,
+        error: {
+          code: 'INVALID_RESPONSE',
+          message: 'Paystack returned unexpected response data.',
+          status: response.status,
+          issues: result.error.issues,
+        },
+      }
     }
 
-    return body.data
+    return {
+      ok: true,
+      value: result.data,
+    }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Paystack did not respond in time.')
+      return {
+        ok: false,
+        error: {
+          code: 'ABORTED',
+          message: 'Paystack did not respond in time.',
+        },
+      }
     }
 
-    throw error
+    return {
+      ok: false,
+      error: {
+        code: 'NETWORK_ERROR',
+        message: error instanceof Error ? error.message : 'An unexpected Paystack request error occurred.',
+      },
+    }
   } finally {
     clearTimeout(timeout)
   }
 }
 
 export function createPaystackClient(args: PaystackClientArgs) {
-  if (!args.secretKey) {
-    throw new Error('Paystack secret key is required.')
-  }
-
   return {
-    initialize(data: InitializeTransactionArgs) {
+    initializePaymentRequest(data: InitializeTransactionArgs) {
       return requestPaystack({
         args,
         init: {
@@ -108,14 +179,15 @@ export function createPaystackClient(args: PaystackClientArgs) {
           method: 'POST',
         },
         path: '/transaction/initialize',
-        validate: isInitializeData,
+        schema: PaystackInitializeEnvelopeSchema,
       })
     },
-    verify(reference: string) {
+
+    confirmPaymentRequest(reference: string) {
       return requestPaystack({
         args,
         path: `/transaction/verify/${encodeURIComponent(reference)}`,
-        validate: isTransactionData,
+        schema: PaystackConfirmEnvelopeSchema,
       })
     },
   }

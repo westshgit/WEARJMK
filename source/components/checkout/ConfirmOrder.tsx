@@ -3,73 +3,70 @@
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Button } from '@/components/ui/button'
 import { confirmPaystackPayment } from '@/lib/api/payment/api'
-import { useCart } from '@payloadcms/plugin-ecommerce/client/react'
+import { useServerActionWithState } from '@/utilities'
+import { useEcommerce } from '@payloadcms/plugin-ecommerce/client/react'
 import { toast } from '@payloadcms/ui'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { RiRefreshLine } from '@remixicon/react'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
-export const ConfirmOrder: React.FC = () => {
-  const { clearCart } = useCart()
-
-  const searchParams = useSearchParams()
+export const ConfirmOrder: React.FC<{ reference: string | undefined }> = ({ reference }) => {
   const router = useRouter()
-  // Ensure we only confirm the order once, even if the component re-renders
-  const isConfirming = useRef(false)
-  const [attempt, setAttempt] = useState(0)
-  const [confirmationError, setConfirmationError] = useState<string | null>(null)
+  const { clearSession } = useEcommerce()
 
-  useEffect(() => {
-    const reference = searchParams.get('reference') || searchParams.get('trxref')
-
-    if (reference) {
-      if (!isConfirming.current) {
-        isConfirming.current = true
-
-        void confirmPaystackPayment(reference)
-          .then((result) => {
-            if (result.success) {
-              const { accessToken = '', orderID } = result.data
-              const queryParams = new URLSearchParams()
-
-              if (accessToken) {
-                queryParams.set('accessToken', accessToken)
-              }
-
-              const queryString = queryParams.toString()
-              void clearCart()
-              router.push(`/orders/${orderID}${queryString ? `?${queryString}` : ''}`)
-              return
-            }
-
-            throw new Error(result.formError || 'Payment confirmation did not return an order.')
-          })
-          .catch((error: unknown) => {
-            const message = error instanceof Error ? error.message : 'Unable to confirm this payment.'
-            isConfirming.current = false
-            setConfirmationError(message)
-            toast.error(message)
-          })
+  const {
+    runAction,
+    isPending,
+    state: data,
+  } = useServerActionWithState({
+    action: (args) => confirmPaystackPayment(args as { reference: string }),
+    onSuccess: ({ data: { orderID, accessToken, email } }) => {
+      // data would be accessToken for non user then email for users and also order-id and transaction-id
+      const queryParams = new URLSearchParams()
+      if (email) {
+        queryParams.set('email', email)
       }
+      if (accessToken) {
+        queryParams.set('accessToken', accessToken)
+      }
+      const queryString = queryParams.toString()
+      const orderURL = `/orders/${orderID}${queryString ? `?${queryString}` : ''}`
+
+      // Retire the purchased cart from the client session. Payload will create a
+      // new cart (and a new secret for guests) the next time an item is added.
+      clearSession()
+      window.location.assign(orderURL)
+    },
+    onError: (result) => {
+      if (result.formError) {
+        toast.error(result.formError)
+      }
+    },
+  })
+
+  function handleConfirmOrder() {
+    if (reference) {
+      runAction({ reference })
     } else {
       router.push('/')
     }
-  }, [attempt, clearCart, router, searchParams])
+  }
+
+  // This run on mount alone
+  useEffect(() => {
+    handleConfirmOrder()
+  }, [])
 
   return (
     <div className="text-center w-full flex flex-col items-center justify-start gap-4">
       <h1 className="text-2xl uppercase">Confirming Order</h1>
 
-      {confirmationError ? (
+      {!isPending && data && 'formError' in data && data.formError ? (
         <div className="flex flex-col items-center gap-4">
-          <p className="text-sm text-destructive">{confirmationError}</p>
-          <Button
-            type="button"
-            onClick={() => {
-              setConfirmationError(null)
-              setAttempt((currentAttempt) => currentAttempt + 1)
-            }}
-          >
-            Try again
+          <p className="text-sm text-destructive">{data.formError}</p>
+          <Button type="button" onClick={handleConfirmOrder} className="uppercase font-mono px-2 space-x-0.5">
+            <RiRefreshLine />
+            <span>Try again</span>
           </Button>
         </div>
       ) : (

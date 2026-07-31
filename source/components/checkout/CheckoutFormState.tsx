@@ -7,8 +7,8 @@ import type { InitializePaymentArgs } from '@/lib/api/payment/types'
 import type { Address, Cart, User } from '@/payload-types'
 import { applyServerFieldErrors, useServerActionWithState } from '@/utilities/useServerActionWithState'
 import { useAddresses } from '@payloadcms/plugin-ecommerce/client/react'
-import { toast } from '@payloadcms/ui'
 import { useForm, useSelector } from '@tanstack/react-form'
+import { toast } from 'sonner'
 
 // No relations, no giant literal unions to walk, no `id`/timestamps.
 export type AddressFormValues = {

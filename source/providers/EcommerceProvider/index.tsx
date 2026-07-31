@@ -1,7 +1,7 @@
 'use client'
 
-import { paystackAdapterClient } from '@/lib/api/payment/paystack/clientAdapter'
 import { EcommerceProvider as PayloadEcommerceProvider } from '@payloadcms/plugin-ecommerce/client/react'
+import { stripeAdapterClient } from '@payloadcms/plugin-ecommerce/payments/stripe'
 import type { ReactNode } from 'react'
 
 export function EcommerceProvider({ children }: { children: ReactNode }) {
@@ -30,8 +30,8 @@ export function EcommerceProvider({ children }: { children: ReactNode }) {
         },
       }}
       paymentMethods={[
-        paystackAdapterClient({
-          label: 'Paystack',
+        stripeAdapterClient({
+          publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
         }),
       ]}
     >

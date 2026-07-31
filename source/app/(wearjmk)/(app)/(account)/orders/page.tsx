@@ -22,7 +22,7 @@ export default async function Orders() {
       {(!orders || !Array.isArray(orders) || orders?.length === 0) && <p className="">You have no orders.</p>}
 
       <Condition predicate={Boolean(orders && Array.isArray(orders) && orders.length > 0)}>
-        <ul className="flex flex-col gap-6">
+        <ul className="flex flex-col gap-6 max-h-[50vh] overflow-auto no-scrollbar">
           {orders?.map((order) => (
             <li key={order.id}>
               <OrderItem order={order} />

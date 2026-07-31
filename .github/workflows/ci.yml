@@ -146,10 +146,6 @@ jobs:
           echo "cache=${IMAGE_REF}:buildcache" >> "$GITHUB_OUTPUT"
         working-directory: .
 
-      - name: Pull previous image
-        run: docker pull "${{ steps.image.outputs.latest }}" || true
-        working-directory: .
-
       - name: Build with Railpack
         run: |
           railpack build \

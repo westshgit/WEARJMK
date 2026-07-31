@@ -17,7 +17,7 @@ type _CreateTransactionArgs = Omit<CreateTransactionOptions, 'collection' | 'dat
   select?: TransactionsSelect<false> | TransactionsSelect<true>
 }
 
-export type GetTransactionsArgs = Partial<Omit<_GetTransactionsArgs, 'collection' | 'overrideAccess' | 'req' | 'user'>>
+export type GetTransactionsArgs = Partial<Omit<_GetTransactionsArgs, 'collection' | 'overrideAccess' | 'user'>>
 
 export type CreateTransactionArgs = Omit<_CreateTransactionArgs, 'collection' | 'overrideAccess' | 'user'>
 

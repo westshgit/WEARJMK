@@ -29,3 +29,10 @@ export const metadata: Metadata = {
   }),
   title: 'Checkout',
 }
+
+// Initialize Transaction with customer's email, amount, cb_url,
+//Initialize returns a reference and an authorization url to redirect the customer to.
+// Redirect customer to the authorization url to complete the payment.
+// redirect back to the callback_url with the reference as a query parameter.
+// /transaction/verify?reference=reference
+// register a route to handle the callback and verify the transaction using the reference.

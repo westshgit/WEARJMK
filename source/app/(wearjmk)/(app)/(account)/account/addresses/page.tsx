@@ -18,7 +18,7 @@ export default async function AddressesPage() {
       <h1 className="text-3xl font-medium mb-8 uppercase">Addresses</h1>
       <div className="mb-8">
         <Suspense fallback={<p>Loading addresses...</p>}>
-          <div className="max-h-[50vh] overflow-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+          <div className="max-h-[50vh] overflow-auto no-scrollbar">
             <AddressListing />
           </div>
         </Suspense>

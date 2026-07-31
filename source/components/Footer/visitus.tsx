@@ -87,7 +87,7 @@ export default function VisitUs({ store }: { store: Store[] }) {
   return (
     <div className="space-y-5">
       <h4 className="text-3xl">Visit Us</h4>
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-scroll [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-scroll [-ms-overflow-style:none] no-scrollbar">
         {store.map((store) => (
           <StoreCard key={store.id} store={store} />
         ))}

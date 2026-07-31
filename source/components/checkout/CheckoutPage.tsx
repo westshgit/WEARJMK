@@ -19,7 +19,6 @@ import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { useCheckoutFormState } from './CheckoutFormState'
 import LoggedInUserCheckout from './LoggedInUserCheckout'
 import GuestUserCheckout from './GuestUserCheckout'
-import { toast } from '@payloadcms/ui'
 
 export const CheckoutPage: React.FC<{ user?: User; policyBlock: PolicyBlock | undefined }> = ({ user, policyBlock }) => {
   const router = useRouter()
@@ -130,7 +129,7 @@ export const CheckoutPage: React.FC<{ user?: User; policyBlock: PolicyBlock | un
         {!cartIsEmpty && (
           <div className="p-4 bg-primary/5 flex flex-col gap-8 rounded-lg">
             <h2 className="text-lg font-medium uppercase">Your cart</h2>
-            <div className="max-h-[60vh] overflow-auto scrollbar-none [&::-webkit-scrollbar]:hidden flex flex-col gap-4">
+            <div className="max-h-[60vh] overflow-auto no-scrollbar flex flex-col gap-4">
               {cart?.items?.map((item, index) => {
                 if (typeof item.product === 'object' && item.product) {
                   const {

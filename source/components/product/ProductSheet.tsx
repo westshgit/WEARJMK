@@ -47,8 +47,8 @@ export default function ProductSheet({ product, price }: { product: Product; pri
         </div>
       </SheetTrigger>
 
-      <SheetContent side="bottom" overlay={false} className="h-[50dvh] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden p-4 rounded-t-xl">
-        <div className="flex-1 max-h-[50dvh] overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+      <SheetContent side="bottom" overlay={false} className="h-[50dvh] overflow-y-auto no-scrollbar p-4 rounded-t-xl">
+        <div className="flex-1 max-h-[50dvh] overflow-y-auto no-scrollbar">
           <ProductDescription product={product} />
         </div>
       </SheetContent>

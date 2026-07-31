@@ -72,7 +72,7 @@ const AddressesModal: React.FC<Props> = ({ setAddress }) => {
         </DialogHeader>
 
         <div className="flex flex-col gap-12">
-          <ul className="flex flex-col gap-8 max-h-[60vh] overflow-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
+          <ul className="flex flex-col gap-8 max-h-[60vh] overflow-auto no-scrollbar">
             {addresses.map((address) => (
               <li key={address.id} className="border-b pb-8 last:border-none">
                 <AddressItem

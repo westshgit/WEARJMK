@@ -2,9 +2,9 @@ import type { GroupField } from 'payload'
 
 import { confirmOrder } from './confirmOrder'
 import { initiatePayment } from './initiatePayment'
-import { webhooksEndpoint } from './endpoints/webhooks'
 import type { PaystackAdapterArgs } from './types'
 import type { PaymentAdapter } from '@payloadcms/plugin-ecommerce/types'
+import { webhooksEndpoint } from './endpoints/webhook'
 
 /**
  * Fields stored on the transactions collection for the Paystack payment

@@ -7,12 +7,19 @@ import { ConfirmOrder } from '@/components/checkout/ConfirmOrder'
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
 
 export default async function ConfirmOrderPage({ searchParams: searchParamsPromise }: { searchParams: SearchParams }) {
-  await searchParamsPromise
+  const searchParams = await searchParamsPromise
+  const reference = searchParams.reference || searchParams.trxref
+  let referenceValue: string | undefined
+  if (Array.isArray(reference)) {
+    referenceValue = reference[0]
+  } else {
+    referenceValue = reference
+  }
 
   return (
     <div className="container min-h-[90vh] flex py-12">
       <Suspense fallback={null}>
-        <ConfirmOrder />
+        <ConfirmOrder reference={referenceValue} />
       </Suspense>
     </div>
   )

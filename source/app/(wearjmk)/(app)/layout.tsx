@@ -1,5 +1,5 @@
 import { AdminBar } from '@/components/AdminBar'
-import { EcommerceProvider } from '@/components/EcommerceProvider'
+import { EcommerceProvider } from '@/providers/EcommerceProvider'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
