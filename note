@@ -7,7 +7,24 @@ git push origin docker-1.0.0
 
 
 git add .
-git commit -m "Made update to the docker CI"
+git commit -m "fix(ci): include Docker Hub namespace in image reference"
 git push 
 git tag docker-2.0.0
 git push origin docker-2.0.0
+
+Delete github tag
+git tag -d docker-2.0.0
+git push origin --delete docker-2.0.0
+
+
+Opening remote
+
+ code --remote ssh-remote+ls.wxsh /home/ls.wxsh
+
+
+ Force recreating in prod
+
+docker compose up -d --force-recreate traefik wearjmk
+docker compose logs -f traefik
+
+jmkfashion.com/admin/login?redirect=%3Ftoken%3DV0VBUkpNSy1hZG1pbi1hY2Nlc3M%253D

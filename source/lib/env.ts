@@ -7,13 +7,14 @@ import dotenv from 'dotenv'
 // This module is also used by standalone scripts run outside Next (tsx/node),
 // so we load .env manually as a fallback here. dotenv does NOT override
 // variables that are already set, so this is a no-op inside Next.js.
-let envPath = path.resolve(process.cwd(), '.env')
+let currentWorkingDir = process.cwd()
+let envPath = path.resolve(currentWorkingDir, '.env')
 
 // This is a fallback for scripts that are run from a subdirectory (e.g. scripts/).
 // we must be careful while using this workaround
 if (!existsSync(envPath)) {
   // Script may be run from a subdirectory (e.g. scripts/), so go up one level
-  envPath = path.resolve(process.cwd(), '..', '.env')
+  envPath = path.resolve(currentWorkingDir, '..', '.env')
 }
 
 if (existsSync(envPath)) {
